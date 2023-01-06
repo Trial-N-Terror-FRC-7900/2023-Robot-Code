@@ -12,7 +12,7 @@
  * Runs the motors with arcade steering.
  */
 class Robot : public frc::TimedRobot {
-  frc::PWMSparkMax m_leftMotor{0};
+  frc::PWMSparkMax m_leftMotor{9};
   frc::PWMSparkMax m_rightMotor{1};
   frc::DifferentialDrive m_robotDrive{m_leftMotor, m_rightMotor};
   frc::Joystick m_stick{0};
