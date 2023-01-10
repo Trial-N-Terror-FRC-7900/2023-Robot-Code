@@ -29,6 +29,8 @@ class Robot : public frc::TimedRobot {
     m_rightMotor.SetInverted(true);
   }
 
+
+  // Auto Area
   void AutonomousInit() override {
 
   }
@@ -37,6 +39,8 @@ class Robot : public frc::TimedRobot {
    
   }
 
+
+  // Teleop Area
   void TeleopInit() override {
 
   }
@@ -45,12 +49,15 @@ class Robot : public frc::TimedRobot {
     // Drive with arcade style
     m_robotDrive.ArcadeDrive(-m_stick.GetY(), -m_stick.GetX());
   }
+
+
+  // Test Methods
   void TestInit() override {
 
   }
 
   void TestPeriodic() override {
-    
+
   }
 };
 
