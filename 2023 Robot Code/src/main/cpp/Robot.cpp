@@ -6,6 +6,10 @@
 #include <frc/TimedRobot.h>
 #include <frc/drive/DifferentialDrive.h>
 #include <frc/motorcontrol/PWMSparkMax.h>
+#include <photonlib/PhotonUtils.h>
+#include "frc/smartdashboard/SmartDashboard.h"
+#include "ctre/Phoenix.h"
+#include "rev/CANSparkMax.h"
 
 /**
  * This is a demo program showing the use of the DifferentialDrive class.
@@ -25,9 +29,28 @@ class Robot : public frc::TimedRobot {
     m_rightMotor.SetInverted(true);
   }
 
+  void AutonomousInit() override {
+
+  }
+
+  void AutonomousPeriodic() override {
+   
+  }
+
+  void TeleopInit() override {
+
+  }
+
   void TeleopPeriodic() override {
     // Drive with arcade style
     m_robotDrive.ArcadeDrive(-m_stick.GetY(), -m_stick.GetX());
+  }
+  void TestInit() override {
+
+  }
+
+  void TestPeriodic() override {
+    
   }
 };
 
