@@ -1,4 +1,4 @@
-// Copyright (c) FIRST and other WPILib contributors.
+s// Copyright (c) FIRST and other WPILib contributors.
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
@@ -87,6 +87,16 @@ class Robot : public frc::TimedRobot {
 
     // Drive with arcade style
     m_robotDrive.ArcadeDrive(StickY, StickX);
+  }
+
+
+  // Test Methods
+  void TestInit() override {
+
+  }
+
+  void TestPeriodic() override {
+
   }
 
 
