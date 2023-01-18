@@ -59,6 +59,7 @@ class Robot : public frc::TimedRobot {
     // result in both sides moving forward. Depending on how your robot's
     // gearbox is constructed, you might have to invert the left side instead.
     m_rightMotor.SetInverted(true);
+
   }
 
 
@@ -81,12 +82,12 @@ class Robot : public frc::TimedRobot {
     double StickX = Deadband(-m_stick.GetX(), 0.05, 2);
     double StickY = Deadband(-m_stick.GetY(), 0.05, 2);
 
-  if (m_stick.GetRawButtonPressed(0)) {
-   turnIntakeOn(); // When pressed the intake turns on
-   
+  //if (m_stick.GetRawButtonPressed(1)) {
+  // turnIntakeOn(); // When pressed the intake turns on   (need to tweak)
+
 }
-if (m_stick.GetRawButtonReleased(0)) {
-   turnIntakeOff(); // When released the intake turns off
+ // if (m_stick.GetRawButtonReleased(0)) {
+  // turnIntakeOff(); // When released the intake turns off
 }
 
 
