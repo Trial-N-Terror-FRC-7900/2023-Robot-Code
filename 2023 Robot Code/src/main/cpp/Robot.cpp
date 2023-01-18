@@ -51,7 +51,8 @@ class Robot : public frc::TimedRobot {
   frc::PWMSparkMax m_leftMotor{9};
   frc::PWMSparkMax m_rightMotor{1};
   frc::DifferentialDrive m_robotDrive{m_leftMotor, m_rightMotor};
-  frc::Joystick m_stick{0};
+  frc::Joystick m_stickDrive{0};
+  //frc::Joystick m_stickOperator{1}; Adding second joystick
 
  public:
   void RobotInit() override {
@@ -79,14 +80,14 @@ class Robot : public frc::TimedRobot {
   }
 
   void TeleopPeriodic() override {
-    double StickX = Deadband(-m_stick.GetX(), 0.05, 2);
-    double StickY = Deadband(-m_stick.GetY(), 0.05, 2);
+    double StickX = Deadband(-m_stickDrive.GetX(), 0.05, 2);
+    double StickY = Deadband(-m_stickDrive.GetY(), 0.05, 2);
 
-  //if (m_stick.GetRawButtonPressed(1)) {
+  //if (m_stickOperator.GetRawButtonPressed(1)) {
   // turnIntakeOn(); // When pressed the intake turns on   (need to tweak)
 
 }
- // if (m_stick.GetRawButtonReleased(0)) {
+ // if (m_stickOperator.GetRawButtonReleased(0)) {
   // turnIntakeOff(); // When released the intake turns off
 }
 
