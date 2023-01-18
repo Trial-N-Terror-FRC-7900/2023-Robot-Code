@@ -52,7 +52,7 @@ class Robot : public frc::TimedRobot {
   frc::PWMSparkMax m_rightMotor{1};
   frc::DifferentialDrive m_robotDrive{m_leftMotor, m_rightMotor};
   frc::Joystick m_stickDrive{0};
-  //frc::Joystick m_stickOperator{1}; Adding second joystick
+  frc::Joystick m_stickOperator{1}; 
 
  public:
   void RobotInit() override {
