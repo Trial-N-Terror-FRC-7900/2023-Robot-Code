@@ -81,6 +81,16 @@ class Robot : public frc::TimedRobot {
     double StickX = Deadband(-m_stick.GetX(), 0.05, 2);
     double StickY = Deadband(-m_stick.GetY(), 0.05, 2);
 
+  if (m_stick.GetRawButtonPressed(0)) {
+   turnIntakeOn(); // When pressed the intake turns on
+   
+}
+if (m_stick.GetRawButtonReleased(0)) {
+   turnIntakeOff(); // When released the intake turns off
+}
+
+
+
     // Drive with arcade style
     m_robotDrive.ArcadeDrive(StickY, StickX);
   }
