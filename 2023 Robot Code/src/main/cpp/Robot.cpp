@@ -57,14 +57,13 @@ rev::CANSparkMax motor5{5, rev::CANSparkMax::MotorType::kBrushless};
 
 frc::Compressor phCompressor{15, frc::PneumaticsModuleType::REVPH};
 
- WPI_VictorSPX m_motor9{9};
+ WPI_VictorSPX motor9{9};
 
 
 //WPI_TalonSRX  m_motor{2};
 frc::DifferentialDrive m_robotDrive{motor2, motor4};
   frc::Joystick m_stickDrive{0};
   frc::Joystick m_stickOperator{1};
-};
 
  public: 
   void RobotInit() override {
@@ -108,33 +107,17 @@ frc::DifferentialDrive m_robotDrive{motor2, motor4};
 
     m_robotDrive.TankDrive(-m_stickDrive.GetY(), m_stickDrive.GetZ());
   
-  {
-  if (m_stickOperator.GetRawButtonPressed(1))
-   motor9(0.5); // When pressed the intake turns on   (need to tweak)
-
-
-};
-
-{
-else 
-
-
-};
+  if (m_stickOperator.GetRawButtonPressed(1)){
+   motor9.Set(0.5); // When pressed the intake turns on   (need to tweak)
   }
-  
+
+};
+};  
 
     // Drive with arcade style
     //m_robotDrive.ArcadeDrive(StickY, StickX);
   
 
-
-<<<<<<< HEAD
-  // Test Methods
-  void TestInit() override{}
-  void TestPeriodic() override{}
-=======
-
->>>>>>> f4febbf0299a4f7326b2dd2d8650c070bf2abb6d
 
 #ifndef RUNNING_FRC_TESTS
 int main() {
