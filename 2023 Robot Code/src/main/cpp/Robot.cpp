@@ -128,9 +128,13 @@ else
   
 
 
+<<<<<<< HEAD
   // Test Methods
   void TestInit() override{}
   void TestPeriodic() override{}
+=======
+
+>>>>>>> f4febbf0299a4f7326b2dd2d8650c070bf2abb6d
 
 #ifndef RUNNING_FRC_TESTS
 int main() {
