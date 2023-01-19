@@ -116,9 +116,7 @@ frc::DifferentialDrive m_robotDrive{motor2, motor4};
   
 
 
-  // Test Methods
-  void TestInit() override{ }
-  void TestPeriodic() override{ }
+
 
 #ifndef RUNNING_FRC_TESTS
 int main() {
