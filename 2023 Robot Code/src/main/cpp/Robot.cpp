@@ -6,9 +6,9 @@
 #include "frc/smartdashboard/SmartDashboard.h"
 #include "ctre/Phoenix.h"
 #include "rev/CANSparkMax.h"
+#include <frc/Compressor.h>
 
-
-// Returns a 1 for postive numbers and a -1 for negative numbers
+// Returns a 1 for posghtive numbers and a -1 for negative numbers
 template <typename T> double sgn(T val) {
     return (T(0) < val) - (val < T(0));
 }
@@ -55,12 +55,18 @@ rev::CANSparkMax motor3{3, rev::CANSparkMax::MotorType::kBrushless};
 rev::CANSparkMax motor4{4, rev::CANSparkMax::MotorType::kBrushless};
 rev::CANSparkMax motor5{5, rev::CANSparkMax::MotorType::kBrushless};
 
- //WPI_VictorSPX m_motor{2};
-  //WPI_TalonSRX  m_motor{2};
-frc::DifferentialDrive m_robotDrive{motor2, motor4};
-  frc::Joystick m_stick{0};
+frc::Compressor phCompressor{15, frc::PneumaticsModuleType::REVPH};
 
- public:
+ WPI_VictorSPX m_motor9{9};
+
+
+//WPI_TalonSRX  m_motor{2};
+frc::DifferentialDrive m_robotDrive{motor2, motor4};
+  frc::Joystick m_stickDrive{0};
+  frc::Joystick m_stickOperator{1};
+};
+
+ public: 
   void RobotInit() override {
     motor2.RestoreFactoryDefaults();
     motor3.RestoreFactoryDefaults();
@@ -71,6 +77,7 @@ frc::DifferentialDrive m_robotDrive{motor2, motor4};
     // gearbox is constructed, you might have to invert the left side instead.
 
     //m_rightMotor.SetInverted(true);
+
 
     motor3.Follow(motor2);
     motor5.Follow(motor4);
@@ -99,16 +106,21 @@ frc::DifferentialDrive m_robotDrive{motor2, motor4};
     //double StickX = Deadband(-m_stick.GetX(), 0.05, 2);
     //double StickY = Deadband(-m_stick.GetY(), 0.05, 2);
 
-    m_robotDrive.TankDrive(-m_stick.GetY(), m_stick.GetZ());
+    m_robotDrive.TankDrive(-m_stickDrive.GetY(), m_stickDrive.GetZ());
   
+  {
+  if (m_stickOperator.GetRawButtonPressed(1))
+   motor9(0.5); // When pressed the intake turns on   (need to tweak)
 
-  //if (m_stick.GetRawButtonPressed(1)) {
-  // turnIntakeOn(); // When pressed the intake turns on   (need to tweak)
 
 };
- // if (m_stick.GetRawButtonReleased(0)) {
-  // turnIntakeOff(); // When released the intake turns off
+
+{
+else 
+
+
 };
+  }
   
 
     // Drive with arcade style
@@ -117,8 +129,8 @@ frc::DifferentialDrive m_robotDrive{motor2, motor4};
 
 
   // Test Methods
-  void TestInit() override{ }
-  void TestPeriodic() override{ }
+  void TestInit() override{}
+  void TestPeriodic() override{}
 
 #ifndef RUNNING_FRC_TESTS
 int main() {
