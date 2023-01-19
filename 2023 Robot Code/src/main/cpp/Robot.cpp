@@ -49,7 +49,6 @@ double Deadband(double input, double limit, int power_scale){
 }
 
 class Robot : public frc::TimedRobot {
-rev::CANSparkMax testmotor{3, rev::CANSparkMax::MotorType::kBrushless};
 
 rev::CANSparkMax motor2{2, rev::CANSparkMax::MotorType::kBrushless};
 rev::CANSparkMax motor3{3, rev::CANSparkMax::MotorType::kBrushless};
@@ -58,20 +57,27 @@ rev::CANSparkMax motor5{5, rev::CANSparkMax::MotorType::kBrushless};
 
  //WPI_VictorSPX m_motor{2};
   //WPI_TalonSRX  m_motor{2};
-//frc::DifferentialDrive m_robotDrive{m_leftMotor, m_rightMotor};
+frc::DifferentialDrive m_robotDrive{motor2, motor4};
   frc::Joystick m_stick{0};
 
  public:
   void RobotInit() override {
+    motor2.RestoreFactoryDefaults();
+    motor3.RestoreFactoryDefaults();
+    motor4.RestoreFactoryDefaults();
+    motor5.RestoreFactoryDefaults();
     // We need to invert one side of the drivetrain so that positive voltages
     // result in both sides moving forward. Depending on how your robot's
     // gearbox is constructed, you might have to invert the left side instead.
-<<<<<<< Updated upstream
-    m_rightMotor.SetInverted(true);
 
-=======
->>>>>>> Stashed changes
-  }
+    //m_rightMotor.SetInverted(true);
+
+    motor3.Follow(motor2);
+    motor5.Follow(motor4);
+
+
+
+  };
 
 
   // Auto Area
@@ -93,49 +99,26 @@ rev::CANSparkMax motor5{5, rev::CANSparkMax::MotorType::kBrushless};
     //double StickX = Deadband(-m_stick.GetX(), 0.05, 2);
     //double StickY = Deadband(-m_stick.GetY(), 0.05, 2);
 
-    testmotor.Set(m_stick.GetY());
-    motor2.Set(m_stick.GetY());
-    motor3.Follow(motor2);
-    motor4.Follow(motor2);
-    motor5.Follow(motor2);
+    m_robotDrive.TankDrive(-m_stick.GetY(), m_stick.GetZ());
+  
 
-    motor2.Set(-m_stick.GetZ());
-    motor3.Follow(motor2);
-    motor4.Set(m_stick.GetZ());
-    motor5.Follow(motor4);
-
-    //testmotor.Set(m_stick.GetZ());
-    //testmotor.Set(-m_stick.GetZ());
-
-<<<<<<< Updated upstream
   //if (m_stick.GetRawButtonPressed(1)) {
   // turnIntakeOn(); // When pressed the intake turns on   (need to tweak)
 
-}
+};
  // if (m_stick.GetRawButtonReleased(0)) {
   // turnIntakeOff(); // When released the intake turns off
-}
-
-
-
-=======
+};
   
->>>>>>> Stashed changes
+
     // Drive with arcade style
     //m_robotDrive.ArcadeDrive(StickY, StickX);
-  }
+  
 
 
   // Test Methods
-  void TestInit() override {
-
-  }
-
-  void TestPeriodic() override {
-
-  }
-
-};
+  void TestInit() override{ }
+  void TestPeriodic() override{ }
 
 #ifndef RUNNING_FRC_TESTS
 int main() {
