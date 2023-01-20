@@ -57,17 +57,24 @@ rev::CANSparkMax motor5{5, rev::CANSparkMax::MotorType::kBrushless};
 rev::CANSparkMax motor7{7, rev::CANSparkMax::MotorType::kBrushless};
 rev::CANSparkMax motor8{8, rev::CANSparkMax::MotorType::kBrushless};
 
-
-
 frc::Compressor phCompressor{6, frc::PneumaticsModuleType::REVPH};
 
- WPI_VictorSPX motor9{9};
-
- WPI_TalonSRX motor16{16};
+WPI_VictorSPX motor9{9};
+WPI_TalonSRX motor6{6};
 
 frc::DifferentialDrive m_robotDrive{motor2, motor4};
-  frc::Joystick m_stickDrive{0};
-  frc::Joystick m_stickOperator{1};
+frc::Joystick m_stickDrive{0};
+frc::Joystick m_stickOperator{1};
+
+rev::SparkMaxPIDController m_pidController = motor7.GetPIDController();
+rev::SparkMaxRelativeEncoder m_encoder = motor8.GetEncoder(); //wasnt sure what were using as an encoder yet, this is just a place holder for now to make sure the code was correct
+
+rev::SparkMaxLimitSwitch forwardLimit = motor7.GetForwardLimitSwitch(rev::SparkMaxLimitSwitch::Type::kNormallyClosed);
+rev::SparkMaxLimitSwitch reverseLimit = motor8.GetReverseLimitSwitch(rev::SparkMaxLimitSwitch::Type::kNormallyClosed);
+
+  double kP = 0.1, kI = 1e-4, kD = 1, kIz = 0, kFF = 0, kMaxOutput = 1, kMinOutput = -1;
+
+
 
  public: 
   void RobotInit() override {
@@ -75,12 +82,32 @@ frc::DifferentialDrive m_robotDrive{motor2, motor4};
     motor3.RestoreFactoryDefaults();
     motor4.RestoreFactoryDefaults();
     motor5.RestoreFactoryDefaults();
+
     // We need to invert one side of the drivetrain so that positive voltages
     // result in both sides moving forward. Depending on how your robot's
     // gearbox is constructed, you might have to invert the left side instead.
 
     //m_rightMotor.SetInverted(true);
+    m_pidController.SetP(kP);
+    m_pidController.SetI(kI);
+    m_pidController.SetD(kD);
+    m_pidController.SetIZone(kIz);
+    m_pidController.SetFF(kFF);
+    m_pidController.SetOutputRange(kMinOutput, kMaxOutput);
 
+    frc::SmartDashboard::PutNumber("P Gain", kP);
+    frc::SmartDashboard::PutNumber("I Gain", kI);
+    frc::SmartDashboard::PutNumber("D Gain", kD);
+    frc::SmartDashboard::PutNumber("I Zone", kIz);
+    frc::SmartDashboard::PutNumber("Feed Forward", kFF);
+    frc::SmartDashboard::PutNumber("Max Output", kMaxOutput);
+    frc::SmartDashboard::PutNumber("Min Output", kMinOutput);
+    frc::SmartDashboard::PutNumber("Set Rotations", 0);
+
+    forwardLimit.EnableLimitSwitch(false);
+    reverseLimit.EnableLimitSwitch(false);
+    frc::SmartDashboard::PutBoolean("Forward Limit Enabled", forwardLimit.IsLimitSwitchEnabled());
+    frc::SmartDashboard::PutBoolean("Reverse Limit Enabled", reverseLimit.IsLimitSwitchEnabled());
 
     motor3.Follow(motor2);
     motor5.Follow(motor4);
@@ -112,11 +139,44 @@ frc::DifferentialDrive m_robotDrive{motor2, motor4};
     m_robotDrive.TankDrive(-m_stickDrive.GetY(), m_stickDrive.GetZ());
   
   if (m_stickOperator.GetRawButtonPressed(2)){
-   motor9.Set(0.5); // When pressed the intake turns on   (need to tweak)
+   motor9.Set(0.5); // When pressed the intake turns on
   }
 
    if (m_stickOperator.GetRawButtonReleased(2)) {
    motor9.Set(0); // When released the intake turns off
+
+  //start PID control
+  //hi scarlette this is for the driver station thing 
+   double p = frc::SmartDashboard::GetNumber("P Gain", 0);
+   double i = frc::SmartDashboard::GetNumber("I Gain", 0);
+   double d = frc::SmartDashboard::GetNumber("D Gain",0);
+   double iz = frc::SmartDashboard::GetNumber("I Zone", 0);
+   double ff = frc::SmartDashboard::GetNumber("Feed Forward", 0);
+   double max = frc::SmartDashboard::GetNumber("Max Output", 0);
+   double min = frc::SmartDashboard::GetNumber("Min Output", 0);
+   double rotations = frc::SmartDashboard::GetNumber("Set Rotations", 0);
+
+    if((p != kP)) { m_pidController.SetP(p); kP = p; }
+    if((i != kI)) { m_pidController.SetI(i); kI = i; }
+    if((d != kD)) { m_pidController.SetD(d); kD = d; }
+    if((iz != kIz)) { m_pidController.SetIZone(iz); kIz = iz; }
+    if((ff != kFF)) { m_pidController.SetFF(ff); kFF = ff; }
+    if((max != kMaxOutput) || (min != kMinOutput)) { }
+      m_pidController.SetOutputRange(min, max); 
+      kMinOutput = min; kMaxOutput = max;
+  m_pidController.SetReference(rotations, rev::CANSparkMax::ControlType::kPosition);
+  //end PID control
+
+  //start spark max limit switch/arm rotation limit switch
+    forwardLimit.EnableLimitSwitch(frc::SmartDashboard::GetBoolean("Forward Limit Enabled", false));
+    reverseLimit.EnableLimitSwitch(frc::SmartDashboard::GetBoolean("Reverse Limit Enabled", false));
+    
+    frc::SmartDashboard::PutNumber("SetPoint", rotations);
+    frc::SmartDashboard::PutNumber("ProcessVariable", m_encoder.GetPosition());
+
+    frc::SmartDashboard::PutBoolean("Forward Limit Switch", forwardLimit.Get());
+    frc::SmartDashboard::PutBoolean("Reverse Limit Switch", forwardLimit.Get());
+
 };
 
 };
