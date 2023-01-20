@@ -54,13 +54,17 @@ rev::CANSparkMax motor2{2, rev::CANSparkMax::MotorType::kBrushless};
 rev::CANSparkMax motor3{3, rev::CANSparkMax::MotorType::kBrushless};
 rev::CANSparkMax motor4{4, rev::CANSparkMax::MotorType::kBrushless};
 rev::CANSparkMax motor5{5, rev::CANSparkMax::MotorType::kBrushless};
+rev::CANSparkMax motor7{7, rev::CANSparkMax::MotorType::kBrushless};
+rev::CANSparkMax motor8{8, rev::CANSparkMax::MotorType::kBrushless};
 
-frc::Compressor phCompressor{15, frc::PneumaticsModuleType::REVPH};
+
+
+frc::Compressor phCompressor{6, frc::PneumaticsModuleType::REVPH};
 
  WPI_VictorSPX motor9{9};
 
+ WPI_TalonSRX motor16{16};
 
-//WPI_TalonSRX  m_motor{2};
 frc::DifferentialDrive m_robotDrive{motor2, motor4};
   frc::Joystick m_stickDrive{0};
   frc::Joystick m_stickOperator{1};
@@ -107,11 +111,17 @@ frc::DifferentialDrive m_robotDrive{motor2, motor4};
 
     m_robotDrive.TankDrive(-m_stickDrive.GetY(), m_stickDrive.GetZ());
   
-  if (m_stickOperator.GetRawButtonPressed(1)){
+  if (m_stickOperator.GetRawButtonPressed(2)){
    motor9.Set(0.5); // When pressed the intake turns on   (need to tweak)
   }
 
+   if (m_stickOperator.GetRawButtonReleased(2)) {
+   motor9.Set(0); // When released the intake turns off
 };
+
+};
+
+ 
 };  
 
     // Drive with arcade style
