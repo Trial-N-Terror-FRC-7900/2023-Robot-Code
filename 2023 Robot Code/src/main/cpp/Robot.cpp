@@ -7,6 +7,8 @@
 #include "ctre/Phoenix.h"
 #include "rev/CANSparkMax.h"
 #include <frc/Compressor.h>
+//#include "PhysicsSim.h" we do not have this, I CANNOT FIND ANY INFO OF IT HELP IM GOING TO HAVE A MENTAL BREAK DOWN I AM TRYING SO HARD WHAT IS THIS THIS IS TERRIBLE
+
 
 // Returns a 1 for posghtive numbers and a -1 for negative numbers
 template <typename T> double sgn(T val) {
@@ -50,6 +52,16 @@ double Deadband(double input, double limit, int power_scale){
 
 class Robot : public frc::TimedRobot {
 
+  std::string _sb;
+  int _loops = 0;
+  bool _lastbutton1 = false;
+  double targetPositionRotations;
+
+  //idk whats going on here, goes with code above ITS THAT STUPID PHYSICS SIM WHAT IS GOING ON I HATE IT HERE SO MUCH
+  // void SimulationInit() {
+    //  PhysicsSim::GetInstance().AddTalonARX(motor6, 0.75, 2000, true); 
+ //}
+
 rev::CANSparkMax motor2{2, rev::CANSparkMax::MotorType::kBrushless};
 rev::CANSparkMax motor3{3, rev::CANSparkMax::MotorType::kBrushless};
 rev::CANSparkMax motor4{4, rev::CANSparkMax::MotorType::kBrushless};
@@ -82,12 +94,14 @@ rev::SparkMaxLimitSwitch reverseLimit = motor8.GetReverseLimitSwitch(rev::SparkM
     motor3.RestoreFactoryDefaults();
     motor4.RestoreFactoryDefaults();
     motor5.RestoreFactoryDefaults();
-
+    motor9.ConfigFactoryDefault();
     // We need to invert one side of the drivetrain so that positive voltages
     // result in both sides moving forward. Depending on how your robot's
     // gearbox is constructed, you might have to invert the left side instead.
 
     //m_rightMotor.SetInverted(true);
+
+    //PID start
     m_pidController.SetP(kP);
     m_pidController.SetI(kI);
     m_pidController.SetD(kD);
@@ -103,7 +117,9 @@ rev::SparkMaxLimitSwitch reverseLimit = motor8.GetReverseLimitSwitch(rev::SparkM
     frc::SmartDashboard::PutNumber("Max Output", kMaxOutput);
     frc::SmartDashboard::PutNumber("Min Output", kMinOutput);
     frc::SmartDashboard::PutNumber("Set Rotations", 0);
+    //PID end
 
+    //Spark Maxes limit switches
     forwardLimit.EnableLimitSwitch(false);
     reverseLimit.EnableLimitSwitch(false);
     frc::SmartDashboard::PutBoolean("Forward Limit Enabled", forwardLimit.IsLimitSwitchEnabled());
@@ -176,6 +192,9 @@ rev::SparkMaxLimitSwitch reverseLimit = motor8.GetReverseLimitSwitch(rev::SparkM
 
     frc::SmartDashboard::PutBoolean("Forward Limit Switch", forwardLimit.Get());
     frc::SmartDashboard::PutBoolean("Reverse Limit Switch", forwardLimit.Get());
+    //end spark max limit switch
+
+
 
 };
 
