@@ -141,8 +141,8 @@ rev::SparkMaxLimitSwitch reverseLimit = motor8.GetReverseLimitSwitch(rev::SparkM
 
   void AutonomousPeriodic() override {
    
-    
-    
+  
+  
 
   }
 
@@ -174,6 +174,10 @@ rev::SparkMaxLimitSwitch reverseLimit = motor8.GetReverseLimitSwitch(rev::SparkM
     motor10.Set(0);
    }
 
+   //frc::DoubleSolenoid exampleDoublePH{9, frc::PneumaticsModuleType::REVPH, 4, 5}; phnuematics for the intake, cant find much info on c++ stuff for it but i think thiss will work
+   //exampleDoublePCM.Set(frc::DoubleSolenoid::Value::kOff);
+   //exampleDoublePCM.Set(frc::DoubleSolenoid::Value::kForward);
+   //exampleDoublePCM.Set(frc::DoubleSolenoid::Value::kReverse);
 
 
   //start PID control
@@ -193,7 +197,7 @@ rev::SparkMaxLimitSwitch reverseLimit = motor8.GetReverseLimitSwitch(rev::SparkM
     if((iz != kIz)) { m_pidController.SetIZone(iz); kIz = iz; }
     if((ff != kFF)) { m_pidController.SetFF(ff); kFF = ff; }
     if((max != kMaxOutput) || (min != kMinOutput)) { }
-      m_pidController.SetOutputRange(min, max); 
+      m_pidController.SetOutputRange(min, max);
       kMinOutput = min; kMaxOutput = max;
   m_pidController.SetReference(rotations, rev::CANSparkMax::ControlType::kPosition);
   //end PID control
