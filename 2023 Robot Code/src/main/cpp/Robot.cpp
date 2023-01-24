@@ -7,7 +7,6 @@
 #include "ctre/Phoenix.h"
 #include "rev/CANSparkMax.h"
 #include <frc/Compressor.h>
-//#include "PhysicsSim.h" we do not have this, I CANNOT FIND ANY INFO OF IT HELP IM GOING TO HAVE A MENTAL BREAK DOWN I AM TRYING SO HARD WHAT IS THIS THIS IS TERRIBLE
 
 
 // Returns a 1 for posghtive numbers and a -1 for negative numbers
@@ -52,15 +51,6 @@ double Deadband(double input, double limit, int power_scale){
 
 class Robot : public frc::TimedRobot {
 
-  std::string _sb;
-  int _loops = 0;
-  bool _lastbutton1 = false;
-  double targetPositionRotations;
-
-  //idk whats going on here, goes with code above ITS THAT STUPID PHYSICS SIM WHAT IS GOING ON I HATE IT HERE SO MUCH
-  // void SimulationInit() {
-    //  PhysicsSim::GetInstance().AddTalonARX(motor6, 0.75, 2000, true); 
- //}
 
 rev::CANSparkMax motor2{2, rev::CANSparkMax::MotorType::kBrushless};
 rev::CANSparkMax motor3{3, rev::CANSparkMax::MotorType::kBrushless};
@@ -83,6 +73,16 @@ rev::SparkMaxRelativeEncoder m_encoder = motor8.GetEncoder(); //wasnt sure what 
 
 rev::SparkMaxLimitSwitch forwardLimit = motor7.GetForwardLimitSwitch(rev::SparkMaxLimitSwitch::Type::kNormallyClosed);
 rev::SparkMaxLimitSwitch reverseLimit = motor8.GetReverseLimitSwitch(rev::SparkMaxLimitSwitch::Type::kNormallyClosed);
+
+//frc::sim::SingleJointedArmSim ArmSim{motor6,
+                                     // kArmGearing,
+                                     // kCarriageMass,
+                                      //kArmDrumRadius,
+                                     // kMinArmHeight,
+                                     // kMaxArmHeight,
+                                     // true,
+                                     // {0.01}};
+  //frc::sim::EncoderSim m_encoderSim{m_encoder};
 
   double kP = 0.1, kI = 1e-4, kD = 1, kIz = 0, kFF = 0, kMaxOutput = 1, kMinOutput = -1;
 
@@ -140,6 +140,9 @@ rev::SparkMaxLimitSwitch reverseLimit = motor8.GetReverseLimitSwitch(rev::SparkM
 
   void AutonomousPeriodic() override {
    
+    
+    
+
   }
 
 
