@@ -62,6 +62,7 @@ rev::CANSparkMax motor8{8, rev::CANSparkMax::MotorType::kBrushless};
 frc::Compressor phCompressor{6, frc::PneumaticsModuleType::REVPH};
 
 WPI_VictorSPX motor9{9};
+WPI_VictorSPX motor10{10};
 WPI_TalonSRX motor6{6};
 
 frc::DifferentialDrive m_robotDrive{motor2, motor4};
@@ -162,7 +163,18 @@ rev::SparkMaxLimitSwitch reverseLimit = motor8.GetReverseLimitSwitch(rev::SparkM
   }
 
    if (m_stickOperator.GetRawButtonReleased(2)) {
-   motor9.Set(0); // When released the intake turns off
+   motor9.Set(0); 
+   } // When released the intake turns off
+
+   if(m_stickOperator.GetRawButtonPressed(2)){
+    motor10.Set(-0.5);
+   }
+
+   if(m_stickOperator.GetRawButtonReleased(2)){
+    motor10.Set(0);
+   }
+
+
 
   //start PID control
   //hi scarlette this is for the driver station thing 
@@ -199,7 +211,7 @@ rev::SparkMaxLimitSwitch reverseLimit = motor8.GetReverseLimitSwitch(rev::SparkM
 
 
 
-};
+
 
 };
 
