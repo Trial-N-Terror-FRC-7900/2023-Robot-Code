@@ -8,6 +8,14 @@
 #include "rev/CANSparkMax.h"
 #include <frc/Compressor.h>
 
+#include <iostream>
+#include <string>
+#include <math.h>
+
+#include <frc/smartdashboard/SmartDashboard.h>
+#include "AHRS.h"
+
+
 
 // Returns a 1 for posghtive numbers and a -1 for negative numbers
 template <typename T> double sgn(T val) {
@@ -51,7 +59,6 @@ double Deadband(double input, double limit, int power_scale){
 
 class Robot : public frc::TimedRobot {
 
-
 rev::CANSparkMax motor2{2, rev::CANSparkMax::MotorType::kBrushless};
 rev::CANSparkMax motor3{3, rev::CANSparkMax::MotorType::kBrushless};
 rev::CANSparkMax motor4{4, rev::CANSparkMax::MotorType::kBrushless};
@@ -75,6 +82,10 @@ rev::SparkMaxRelativeEncoder m_encoder = motor8.GetEncoder(); //wasnt sure what 
 rev::SparkMaxLimitSwitch forwardLimit = motor7.GetForwardLimitSwitch(rev::SparkMaxLimitSwitch::Type::kNormallyClosed);
 rev::SparkMaxLimitSwitch reverseLimit = motor8.GetReverseLimitSwitch(rev::SparkMaxLimitSwitch::Type::kNormallyClosed);
 
+AHRS *ahrs;
+
+//AHRS gyro{SPI::Port::kMXP}; //Navx code, not sure if this is correct
+
 //frc::sim::SingleJointedArmSim ArmSim{motor6,
                                      // kArmGearing,
                                      // kCarriageMass,
@@ -86,6 +97,12 @@ rev::SparkMaxLimitSwitch reverseLimit = motor8.GetReverseLimitSwitch(rev::SparkM
   //frc::sim::EncoderSim m_encoderSim{m_encoder};
 
   double kP = 0.1, kI = 1e-4, kD = 1, kIz = 0, kFF = 0, kMaxOutput = 1, kMinOutput = -1;
+
+  //static const double kOffBalanceThresholdDegrees = 10.0f;  //More navx stuff, it's all red so have fun with that
+//static const double kOnBalanceThresholdDegrees = 5.0f;
+
+//using namespace std;
+    
 
 
 
@@ -129,7 +146,40 @@ rev::SparkMaxLimitSwitch reverseLimit = motor8.GetReverseLimitSwitch(rev::SparkM
     motor3.Follow(motor2);
     motor5.Follow(motor4);
 
+    try
+  {
+    /***********************************************************************
+     * navX-MXP:
+     * - Communication via RoboRIO MXP (SPI, I2C) and USB.            
+     * - See http://navx-mxp.kauailabs.com/guidance/selecting-an-interface.
+     * 
+     * navX-Micro:
+     * - Communication via I2C (RoboRIO MXP or Onboard) and USB.
+     * - See http://navx-micro.kauailabs.com/guidance/selecting-an-interface.
+     * 
+     * VMX-pi:
+     * - Communication via USB.
+     * - See https://vmx-pi.kauailabs.com/installation/roborio-installation/
+     * 
+     * Multiple navX-model devices on a single robot are supported.
+     ************************************************************************/
+    ahrs = new AHRS(frc::SPI::Port::kMXP);
+  }
+  catch (std::exception &ex)
+  {
+    std::string what_string = ex.what();
+    std::string err_msg("Error instantiating navX MXP:  " + what_string);
+    const char *p_err_msg = err_msg.c_str();
+  }
 
+
+
+
+   // ahrs = new AHRS(SPI::Port::kMXP);  //I have no clue what any of this does, it was the only example code I could find. 
+    //AHRS *ahrs; 
+
+   // autoBalanceXMode = false;
+ // autoBalanceYMode = false;
 
   };
 
@@ -211,10 +261,14 @@ rev::SparkMaxLimitSwitch reverseLimit = motor8.GetReverseLimitSwitch(rev::SparkM
 
     frc::SmartDashboard::PutBoolean("Forward Limit Switch", forwardLimit.Get());
     frc::SmartDashboard::PutBoolean("Reverse Limit Switch", forwardLimit.Get());
+
+
     //end spark max limit switch
 
+ //bool motionDetected = ahrs->IsMoving();  //More code from the only example of navx code I could find, I am going crazy rn
+  //SmartDashboard::PutBoolean("MotionDetected", motionDetected);
 
-
+    frc::SmartDashboard::PutNumber("NavX Test", ahrs->GetAngle());
 
 
 };
