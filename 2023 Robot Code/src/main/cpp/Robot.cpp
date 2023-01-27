@@ -14,6 +14,9 @@
 
 #include <frc/smartdashboard/SmartDashboard.h>
 #include "AHRS.h"
+#include <units/pressure.h>
+
+
 
 
 
@@ -66,7 +69,7 @@ rev::CANSparkMax motor5{5, rev::CANSparkMax::MotorType::kBrushless};
 rev::CANSparkMax motor7{7, rev::CANSparkMax::MotorType::kBrushless};
 rev::CANSparkMax motor8{8, rev::CANSparkMax::MotorType::kBrushless};
 
-frc::Compressor phCompressor{6, frc::PneumaticsModuleType::REVPH};
+frc::Compressor phCompressor{15, frc::PneumaticsModuleType::REVPH};
 
 WPI_VictorSPX motor9{9};
 WPI_VictorSPX motor10{10};
@@ -84,7 +87,9 @@ rev::SparkMaxLimitSwitch reverseLimit = motor8.GetReverseLimitSwitch(rev::SparkM
 
 AHRS *ahrs;
 
-//AHRS gyro{SPI::Port::kMXP}; //Navx code, not sure if this is correct
+
+
+
 
 //frc::sim::SingleJointedArmSim ArmSim{motor6,
                                      // kArmGearing,
@@ -143,8 +148,25 @@ AHRS *ahrs;
     frc::SmartDashboard::PutBoolean("Forward Limit Enabled", forwardLimit.IsLimitSwitchEnabled());
     frc::SmartDashboard::PutBoolean("Reverse Limit Enabled", reverseLimit.IsLimitSwitchEnabled());
 
+    frc::DoubleSolenoid intake{9, frc::PneumaticsModuleType::REVPH, 4, 5}; //we are using double solenoids, this is supposed to define the intake one. idk why the name is red.
+
     motor3.Follow(motor2);
     motor5.Follow(motor4);
+
+    intakeS.Set(frc::DoubleSolenoid::Value::kOff); //These are supposed to be the different levels it goes or something.
+    intakeS.Set(frc::DoubleSolenoid::Value::kForward);
+    intakeS.Set(frc::DoubleSolenoid::Value::kReverse);
+
+    // product-specific voltage->pressure conversion, see product manual
+// in this case, 250(V/5)-25
+// the scale parameter in the AnalogPotentiometer constructor is scaled from 1 instead of 5,
+// so if r is the raw AnalogPotentiometer output, the pressure is 250r-25
+double scale = 250, offset = -25;
+frc::AnalogPotentiometer pressureTransducer{/* the AnalogIn port*/ 2, scale, offset};
+
+
+// scaled values in psi units
+double psi = pressureTransducer.Get();
 
     try
   {
@@ -206,7 +228,9 @@ AHRS *ahrs;
     //double StickX = Deadband(-m_stick.GetX(), 0.05, 2);
     //double StickY = Deadband(-m_stick.GetY(), 0.05, 2);
 
-    m_robotDrive.TankDrive(-m_stickDrive.GetY(), m_stickDrive.GetZ());
+  m_robotDrive.TankDrive(Deadband(-m_stickDrive.GetY(), m_stickDrive.GetZ(), 0.5)); //no idea why that one parenthesis is red. Deadband works tho.
+
+
   
   if (m_stickOperator.GetRawButtonPressed(2)){
    motor9.Set(0.5); // When pressed the intake turns on
@@ -261,6 +285,8 @@ AHRS *ahrs;
 
     frc::SmartDashboard::PutBoolean("Forward Limit Switch", forwardLimit.Get());
     frc::SmartDashboard::PutBoolean("Reverse Limit Switch", forwardLimit.Get());
+
+
 
 
     //end spark max limit switch
