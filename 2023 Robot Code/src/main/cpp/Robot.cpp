@@ -101,7 +101,7 @@ AHRS *ahrs;
                                      // {0.01}};
   //frc::sim::EncoderSim m_encoderSim{m_encoder};
 
-  double kP = 0.1, kI = 1e-4, kD = 1, kIz = 0, kFF = 0, kMaxOutput = 1, kMinOutput = -1;
+  //double kP = 0.1, kI = 1e-4, kD = 1, kIz = 0, kFF = 0, kMaxOutput = 1, kMinOutput = -1;
 
   //static const double kOffBalanceThresholdDegrees = 10.0f;  //More navx stuff, it's all red so have fun with that
 //static const double kOnBalanceThresholdDegrees = 5.0f;
@@ -125,12 +125,12 @@ AHRS *ahrs;
     //m_rightMotor.SetInverted(true);
 
     //PID start
-    m_pidController.SetP(kP);
+   /* m_pidController.SetP(kP);
     m_pidController.SetI(kI);
     m_pidController.SetD(kD);
     m_pidController.SetIZone(kIz);
     m_pidController.SetFF(kFF);
-    m_pidController.SetOutputRange(kMinOutput, kMaxOutput);
+    m_pidController.SetOutputRange(kMinOutput, kMaxOutput); 
 
     frc::SmartDashboard::PutNumber("P Gain", kP);
     frc::SmartDashboard::PutNumber("I Gain", kI);
@@ -148,12 +148,14 @@ AHRS *ahrs;
     frc::SmartDashboard::PutBoolean("Forward Limit Enabled", forwardLimit.IsLimitSwitchEnabled());
     frc::SmartDashboard::PutBoolean("Reverse Limit Enabled", reverseLimit.IsLimitSwitchEnabled());
 
-    frc::DoubleSolenoid intake{9, frc::PneumaticsModuleType::REVPH, 4, 5}; //we are using double solenoids, this is supposed to define the intake one. idk why the name is red.
+    frc::DoubleSolenoid intake{9, frc::PneumaticsModuleType::REVPH, 4, 5}; //we are using double solenoids, this is supposed to define the intake one. idk why the name is red. */
 
     motor3.Follow(motor2);
     motor5.Follow(motor4);
 
-    intakeS.Set(frc::DoubleSolenoid::Value::kOff); //These are supposed to be the different levels it goes or something.
+    m_robotDrive.SetDeadband(0);
+
+    /* intakeS.Set(frc::DoubleSolenoid::Value::kOff); //These are supposed to be the different levels it goes or something.
     intakeS.Set(frc::DoubleSolenoid::Value::kForward);
     intakeS.Set(frc::DoubleSolenoid::Value::kReverse);
 
@@ -162,15 +164,15 @@ AHRS *ahrs;
 // the scale parameter in the AnalogPotentiometer constructor is scaled from 1 instead of 5,
 // so if r is the raw AnalogPotentiometer output, the pressure is 250r-25
 double scale = 250, offset = -25;
-frc::AnalogPotentiometer pressureTransducer{/* the AnalogIn port*/ 2, scale, offset};
+frc::AnalogPotentiometer pressureTransducer{ the AnalogIn port 2, scale, offset};
 
 
 // scaled values in psi units
 double psi = pressureTransducer.Get();
 
-    try
+    try 
   {
-    /***********************************************************************
+    */ /**********************************************************************
      * navX-MXP:
      * - Communication via RoboRIO MXP (SPI, I2C) and USB.            
      * - See http://navx-mxp.kauailabs.com/guidance/selecting-an-interface.
@@ -184,15 +186,15 @@ double psi = pressureTransducer.Get();
      * - See https://vmx-pi.kauailabs.com/installation/roborio-installation/
      * 
      * Multiple navX-model devices on a single robot are supported.
-     ************************************************************************/
-    ahrs = new AHRS(frc::SPI::Port::kMXP);
+     ***********************************************************************
+    //ahrs = new AHRS(frc::SPI::Port::kMXP);
   }
-  catch (std::exception &ex)
+  //catch (std::exception &ex)
   {
     std::string what_string = ex.what();
     std::string err_msg("Error instantiating navX MXP:  " + what_string);
     const char *p_err_msg = err_msg.c_str();
-  }
+  } */
 
 
 
@@ -228,11 +230,11 @@ double psi = pressureTransducer.Get();
     //double StickX = Deadband(-m_stick.GetX(), 0.05, 2);
     //double StickY = Deadband(-m_stick.GetY(), 0.05, 2);
 
-  m_robotDrive.TankDrive(Deadband(-m_stickDrive.GetY(), m_stickDrive.GetZ(), 0.5)); //no idea why that one parenthesis is red. Deadband works tho.
+  m_robotDrive.ArcadeDrive(Deadband(-m_stickDrive.GetY(), 0.02, 2), Deadband(m_stickDrive.GetZ(), 0.02)); 
 
 
   
-  if (m_stickOperator.GetRawButtonPressed(2)){
+  /*if (m_stickOperator.GetRawButtonPressed(2)){
    motor9.Set(0.5); // When pressed the intake turns on
   }
 
@@ -294,7 +296,7 @@ double psi = pressureTransducer.Get();
  //bool motionDetected = ahrs->IsMoving();  //More code from the only example of navx code I could find, I am going crazy rn
   //SmartDashboard::PutBoolean("MotionDetected", motionDetected);
 
-    frc::SmartDashboard::PutNumber("NavX Test", ahrs->GetAngle());
+    frc::SmartDashboard::PutNumber("NavX Test", ahrs->GetAngle());*/
 
 
 };
