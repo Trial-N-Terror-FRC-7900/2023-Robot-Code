@@ -7,7 +7,7 @@
 #include "ctre/Phoenix.h"
 #include "rev/CANSparkMax.h"
 #include <frc/Compressor.h>
-
+#include <frc/XboxController.h>
 #include <iostream>
 #include <string>
 #include <math.h>
@@ -15,7 +15,7 @@
 #include <frc/smartdashboard/SmartDashboard.h>
 #include "AHRS.h"
 #include <units/pressure.h>
-
+#include <frc/DoubleSolenoid.h>
 
 
 
@@ -70,7 +70,9 @@ rev::CANSparkMax motor7{7, rev::CANSparkMax::MotorType::kBrushless};
 rev::CANSparkMax motor8{8, rev::CANSparkMax::MotorType::kBrushless};
 
 frc::Compressor phCompressor{15, frc::PneumaticsModuleType::REVPH};
-//frc::DoubleSolenoid intakepneumatic{3, 2, 3};
+
+frc::DoubleSolenoid intakeS{15, frc::PneumaticsModuleType::REVPH, 2, 3};
+
 double scale = 250, offset = -25;
 //frc::AnalogPotentiometer pressureTransducer{1, scale, offset};
 
@@ -80,7 +82,7 @@ WPI_TalonSRX motor6{6};
 
 frc::DifferentialDrive m_robotDrive{motor2, motor4};
 frc::Joystick m_stickDrive{0};
-frc::Joystick m_stickOperator{1};
+frc::XboxController m_stickOperator{1};
 
 rev::SparkMaxPIDController m_pidController = motor7.GetPIDController();
 rev::SparkMaxRelativeEncoder m_encoder = motor8.GetEncoder(); //wasnt sure what were using as an encoder yet, this is just a place holder for now to make sure the code was correct
@@ -164,9 +166,9 @@ AHRS *ahrs;
     motor5.Follow(motor4);
 
 
-    //intakeS.Set(frc::DoubleSolenoid::Value::kOff); //These are supposed to be the different levels it goes or something.
-    //intakeS.Set(frc::DoubleSolenoid::Value::kForward);
-    //intakeS.Set(frc::DoubleSolenoid::Value::kReverse);
+    intakeS.Set(frc::DoubleSolenoid::Value::kOff); //These are supposed to be the different levels it goes or something.
+    intakeS.Set(frc::DoubleSolenoid::Value::kForward);
+    intakeS.Set(frc::DoubleSolenoid::Value::kReverse);
 
     // product-specific voltage->pressure conversion, see product manual
 // in this case, 250(V/5)-25
@@ -223,7 +225,14 @@ AHRS *ahrs;
 
   void AutonomousPeriodic() override {
    
-  
+    // The autonomous routines
+ // DriveDistance m_simpleAuto{AutoConstants::kAutoDriveDistanceInches,
+    //                         AutoConstants::kAutoDriveSpeed, &m_drive};
+  //ComplexAuto m_complexAuto{&m_drive, &m_hatch};
+
+  // The chooser for the autonomous routines
+  //frc::SendableChooser<frc2::Command*> m_chooser;
+
   
 
   }
@@ -242,26 +251,23 @@ AHRS *ahrs;
 
 
   
-  if (m_stickOperator.GetRawButtonPressed(2)){
+  if (m_stickOperator.GetRightBumperPressed()){
    motor9.Set(0.5); // When pressed the intake turns on
   }
 
-   if (m_stickOperator.GetRawButtonReleased(2)) {
+   if (m_stickOperator.GetRightBumperReleased()) {
    motor9.Set(0); 
    } // When released the intake turns off
 
-   if(m_stickOperator.GetRawButtonPressed(2)){
+   if(m_stickOperator.GetRightBumperPressed()){
     motor10.Set(-0.5);
    }
 
-   if(m_stickOperator.GetRawButtonReleased(2)){
+   if(m_stickOperator.GetRightBumperReleased()){
     motor10.Set(0);
    }
 
-   //frc::DoubleSolenoid exampleDoublePH{9, frc::PneumaticsModuleType::REVPH, 4, 5}; //phnuematics for the intake, cant find much info on c++ stuff for it but i think thiss will work
-   //exampleDoublePCM.Set(frc::DoubleSolenoid::Value::kOff);
-   //exampleDoublePCM.Set(frc::DoubleSolenoid::Value::kForward);
-   //exampleDoublePCM.Set(frc::DoubleSolenoid::Value::kReverse);
+  //frc::DoubleSolenoid::Toggle();
 
 
   //start PID control
