@@ -60,6 +60,10 @@ double Deadband(double input, double limit, int power_scale){
   return output;
 }
 
+static const double kOffBalanceThresholdDegrees = 10.0f; //auto balance stuff
+static const double kOnBalanceThresholdDegrees  = 5.0f;
+
+
 class Robot : public frc::TimedRobot {
 
 rev::CANSparkMax motor2{2, rev::CANSparkMax::MotorType::kBrushless};
@@ -90,9 +94,18 @@ rev::SparkMaxRelativeEncoder m_encoder = motor8.GetEncoder(); //wasnt sure what 
 rev::SparkMaxLimitSwitch forwardLimit = motor7.GetForwardLimitSwitch(rev::SparkMaxLimitSwitch::Type::kNormallyClosed);
 rev::SparkMaxLimitSwitch reverseLimit = motor8.GetReverseLimitSwitch(rev::SparkMaxLimitSwitch::Type::kNormallyClosed);
 
+rev::SparkMaxRelativeEncoder motor2Encoder = motor2.GetEncoder(rev::SparkMaxRelativeEncoder::Type::kHallSensor, 42);
+rev::SparkMaxRelativeEncoder motor4Encoder = motor4.GetEncoder(rev::SparkMaxRelativeEncoder::Type::kHallSensor, 42);
+
+double drivedistance = 6;
+double SelectedAuto = 0; //selected auto
+
 AHRS *ahrs;
 
+    bool autoBalanceXMode; //Auto balance stuff (not sure what it does)
+    bool autoBalanceYMode;
 
+     
 
 
 
@@ -205,6 +218,8 @@ AHRS *ahrs;
     std::string err_msg("Error instantiating navX MXP:  " + what_string);
     const char * p_err_msg = err_msg.c_str();
   }
+        autoBalanceXMode = false; //auto stuff
+        autoBalanceYMode = false;
 
 
 
@@ -221,25 +236,79 @@ AHRS *ahrs;
   // Auto Area
   void AutonomousInit() override {
 
+  motor2Encoder.SetPosition(0); 
+  motor4Encoder.SetPosition(0);
+
+  drivedistance = (drivedistance * 12)/(6 * 3.141592635) * (34/18) * (62/12) * (42); //converting from ft to counts of the encoder
+
+  SelectedAuto = frc::SmartDashboard::GetNumber("Selected Auto", 0);
+
   }
 
   void AutonomousPeriodic() override {
    
-    // The autonomous routines
- // DriveDistance m_simpleAuto{AutoConstants::kAutoDriveDistanceInches,
-    //                         AutoConstants::kAutoDriveSpeed, &m_drive};
-  //ComplexAuto m_complexAuto{&m_drive, &m_hatch};
+    if(SelectedAuto == 1){  //just driving backwards
 
-  // The chooser for the autonomous routines
-  //frc::SendableChooser<frc2::Command*> m_chooser;
 
-  
+      if(motor2Encoder.GetPosition() < drivedistance){   //Driving to set distance
+
+        motor2.Set(0.3);
+      }
+
+      else{
+
+        motor2.Set(0);  //stopping once reaching set distance
+
+      }
+
+      if(motor4Encoder.GetPosition() < drivedistance){
+
+        motor4.Set(0.3);
+      }
+
+     else{
+
+      motor4.Set(0);
+
+    }
 
   }
+
+  if(SelectedAuto == 2){   //Auto balance
+
+    if(motor2Encoder.GetPosition() < drivedistance){   //Driving to set distance
+
+        motor2.Set(0.3);
+      }
+
+      else{
+
+        motor2.Set(0);  //stopping once reaching set distance
+
+      }
+
+      if(motor4Encoder.GetPosition() < drivedistance){
+
+        motor4.Set(0.3);
+      }
+
+     else{
+
+      motor4.Set(0);
+
+    }
+
+
+
+  }
+
+}
 
 
   // Teleop Area
   void TeleopInit() override {
+
+    frc::SmartDashboard::PutNumber("Selected Auto", 0);
 
   }
 
@@ -247,7 +316,7 @@ AHRS *ahrs;
     //double StickX = Deadband(-m_stick.GetX(), 0.05, 2);
     //double StickY = Deadband(-m_stick.GetY(), 0.05, 2);
 
-  m_robotDrive.ArcadeDrive(Deadband(-m_stickDrive.GetY(), 0.05, 2), Deadband(m_stickDrive.GetZ(), 0.05)); //no idea why that one parenthesis is red. Deadband works tho.
+  m_robotDrive.ArcadeDrive(Deadband(-m_stickDrive.GetY(), 0.05, 2), Deadband(m_stickDrive.GetZ(), 0.05)); 
 
 
   
