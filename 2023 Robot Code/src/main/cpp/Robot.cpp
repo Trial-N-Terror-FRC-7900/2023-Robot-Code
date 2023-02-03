@@ -76,6 +76,8 @@ rev::CANSparkMax motor8{8, rev::CANSparkMax::MotorType::kBrushless};
 frc::Compressor phCompressor{15, frc::PneumaticsModuleType::REVPH};
 
 frc::DoubleSolenoid intakeS{15, frc::PneumaticsModuleType::REVPH, 2, 3};
+frc::DoubleSolenoid intakeN{15, frc::PneumaticsModuleType::REVPH, 4, 5};
+
 
 double scale = 250, offset = -25;
 //frc::AnalogPotentiometer pressureTransducer{1, scale, offset};
@@ -172,7 +174,7 @@ AHRS *ahrs;
 
     //phCompressor.SetClosedLoopControl(false);
 
-    //bool enabled = phCompressor.Enabled();
+    bool enabled = phCompressor.Enabled();
     bool pressureSwitch = phCompressor.GetPressureSwitchValue();
     //double current = phCompressor.GetCurrent();
 
@@ -377,8 +379,20 @@ AHRS *ahrs;
     motor10.Set(0);
    }
 
-  //frc::DoubleSolenoid::Toggle();
+  //pnuematics for INTAKEEEEEE
+  intakeS.Set(frc::DoubleSolenoid::Value::kReverse);
 
+if (m_stickOperator.GetXButtonPressed()) {
+   intakeS.Toggle();
+}
+
+
+  intakeN.Set(frc::DoubleSolenoid::Value::kReverse);
+
+if (m_stickOperator.GetXButtonPressed()) {
+   intakeN.Toggle();
+}
+//end pnuematics
 
   //start PID control
   //hi scarlette this is for the driver station thing 
@@ -411,10 +425,6 @@ AHRS *ahrs;
 
     frc::SmartDashboard::PutBoolean("Forward Limit Switch", forwardLimit.Get());
     frc::SmartDashboard::PutBoolean("Reverse Limit Switch", forwardLimit.Get());
-
-
-
-
     //end spark max limit switch
 
  //bool motionDetected = ahrs->IsMoving();  //More code from the only example of navx code I could find, I am going crazy rn
