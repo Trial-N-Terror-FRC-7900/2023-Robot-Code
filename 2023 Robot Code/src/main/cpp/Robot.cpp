@@ -89,7 +89,7 @@ frc::Joystick m_stickDrive{0};
 frc::XboxController m_stickOperator{1};
 
 rev::SparkMaxPIDController m_pidController = motor7.GetPIDController();
-rev::SparkMaxRelativeEncoder m_encoder = motor8.GetEncoder(); //wasnt sure what were using as an encoder yet, this is just a place holder for now to make sure the code was correct
+rev::SparkMaxRelativeEncoder motor8encoder = motor8.GetEncoder(rev::SparkMaxRelativeEncoder::Type::kHallSensor, 42); //place holder for now to make sure the code was correct
 
 rev::SparkMaxLimitSwitch forwardLimit = motor7.GetForwardLimitSwitch(rev::SparkMaxLimitSwitch::Type::kNormallyClosed);
 rev::SparkMaxLimitSwitch reverseLimit = motor8.GetReverseLimitSwitch(rev::SparkMaxLimitSwitch::Type::kNormallyClosed);
@@ -100,6 +100,8 @@ rev::SparkMaxRelativeEncoder motor4Encoder = motor4.GetEncoder(rev::SparkMaxRela
 
 double drivedistance = 6;
 double drivedistance2 = 7;
+double drivedistance3 = -12; //if we are in the far RIGHT of BLUE
+double drivedistanceB = 0.5; //pushing block/cone/whatever fowrard
 double SelectedAuto = 0; //selected auto
 
 AHRS *ahrs;
@@ -244,6 +246,7 @@ AHRS *ahrs;
 
   drivedistance = (drivedistance * 12)/(6 * 3.141592635) * (34/18) * (62/12) * (42); //converting from ft to counts of the encoder
   drivedistance2 = (drivedistance2 * 12)/(6 * 3.141592635) * (34/18) * (62/12) * (42); //converting from ft to counts of the encoder
+  drivedistance = (drivedistance3 * 12)/(6 * 3.141592635) * (34/18) * (62/12) * (42); 
 
   SelectedAuto = frc::SmartDashboard::GetNumber("Selected Auto", 0);
 
@@ -302,13 +305,47 @@ AHRS *ahrs;
 
     }
 
-
-
   }
+
+    if(SelectedAuto == 3){  //FAR RIGHT BLUE?????????? w/ block on ground level????? idk if it'll work but i tried
+
+      if(motor2Encoder.GetPosition() < drivedistanceB){
+
+        motor2.Set(0.3);
+      
+      }
+      else{
+
+        
+        motor2.Set(0);
+      
+      }
+
+      if(motor2Encoder.GetPosition() < drivedistance3){ 
+
+        motor2.Set(0.3);
+      }
+
+      else{
+
+        motor2.Set(0); 
+
+      }
+
+      if(motor4Encoder.GetPosition() < drivedistance3){
+
+        motor4.Set(0.3);
+      }
+
+     else{
+
+      motor4.Set(0);
+
+    }
 
 }
 
-
+}
   // Teleop Area
   void TeleopInit() override {
 
@@ -370,7 +407,7 @@ AHRS *ahrs;
     reverseLimit.EnableLimitSwitch(frc::SmartDashboard::GetBoolean("Reverse Limit Enabled", false));
     
     frc::SmartDashboard::PutNumber("SetPoint", rotations);
-    frc::SmartDashboard::PutNumber("ProcessVariable", m_encoder.GetPosition());
+    frc::SmartDashboard::PutNumber("ProcessVariable", motor8encoder.GetPosition());
 
     frc::SmartDashboard::PutBoolean("Forward Limit Switch", forwardLimit.Get());
     frc::SmartDashboard::PutBoolean("Reverse Limit Switch", forwardLimit.Get());
