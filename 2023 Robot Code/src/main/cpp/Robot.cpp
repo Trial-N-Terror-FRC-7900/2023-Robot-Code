@@ -97,7 +97,9 @@ rev::SparkMaxLimitSwitch reverseLimit = motor8.GetReverseLimitSwitch(rev::SparkM
 rev::SparkMaxRelativeEncoder motor2Encoder = motor2.GetEncoder(rev::SparkMaxRelativeEncoder::Type::kHallSensor, 42);
 rev::SparkMaxRelativeEncoder motor4Encoder = motor4.GetEncoder(rev::SparkMaxRelativeEncoder::Type::kHallSensor, 42);
 
+
 double drivedistance = 6;
+double drivedistance2 = 7;
 double SelectedAuto = 0; //selected auto
 
 AHRS *ahrs;
@@ -238,8 +240,10 @@ AHRS *ahrs;
 
   motor2Encoder.SetPosition(0); 
   motor4Encoder.SetPosition(0);
+  ahrs->Reset();
 
   drivedistance = (drivedistance * 12)/(6 * 3.141592635) * (34/18) * (62/12) * (42); //converting from ft to counts of the encoder
+  drivedistance2 = (drivedistance2 * 12)/(6 * 3.141592635) * (34/18) * (62/12) * (42); //converting from ft to counts of the encoder
 
   SelectedAuto = frc::SmartDashboard::GetNumber("Selected Auto", 0);
 
