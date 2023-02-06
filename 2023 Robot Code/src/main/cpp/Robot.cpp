@@ -83,7 +83,9 @@ double scale = 250, offset = -25;
 //frc::AnalogPotentiometer pressureTransducer{1, scale, offset};
 
 WPI_VictorSPX motor9{9};
-WPI_VictorSPX motor10{10};
+WPI_VictorSPX motor10{10}; 
+WPI_VictorSPX motor13{13};
+WPI_VictorSPX motor14{14}; 
 WPI_TalonSRX motor6{6};
 
 frc::DifferentialDrive m_robotDrive{motor2, motor4};
@@ -103,7 +105,7 @@ rev::SparkMaxRelativeEncoder motor4Encoder = motor4.GetEncoder(rev::SparkMaxRela
 double drivedistance = 6;
 double drivedistance2 = 7;
 double drivedistance3 = -12; //if we are in the far RIGHT of BLUE
-double drivedistanceB = 0.5; //pushing block/cone/whatever fowrard
+double drivedistance4 = 0.5; //pushing block/cone/whatever fowrard MAYBEEEEEEEEEEE
 double SelectedAuto = 0; //selected auto
 
 AHRS *ahrs;
@@ -166,6 +168,8 @@ AHRS *ahrs;
     frc::SmartDashboard::PutNumber("Set Rotations", 0);
     //PID end
 
+    frc::SmartDashboard::PutNumber("Selected Auto", 0);
+
     //Spark Maxes limit switches
     forwardLimit.EnableLimitSwitch(false);
     reverseLimit.EnableLimitSwitch(false);
@@ -178,7 +182,6 @@ AHRS *ahrs;
     bool pressureSwitch = phCompressor.GetPressureSwitchValue();
     //double current = phCompressor.GetCurrent();
 
-    //frc::DoubleSolenoid intake{9, 4, 5}; //we are using double solenoids, this is supposed to define the intake one. idk why the name is red.
     
     m_robotDrive.SetDeadband(0);
     motor3.Follow(motor2);
@@ -233,8 +236,6 @@ AHRS *ahrs;
    // ahrs = new AHRS(SPI::Port::kMXP);  //I have no clue what any of this does, it was the only example code I could find. 
     //AHRS *ahrs; 
 
-   // autoBalanceXMode = false;
- // autoBalanceYMode = false;
 
   };
 
@@ -285,7 +286,7 @@ AHRS *ahrs;
 
   if(SelectedAuto == 2){   //Auto balance
 
-    if(motor2Encoder.GetPosition() < drivedistance){   //Driving to set distance
+    if(motor2Encoder.GetPosition() < drivedistance2){   //Driving to set distance
 
         motor2.Set(0.3);
       }
@@ -296,7 +297,7 @@ AHRS *ahrs;
 
       }
 
-      if(motor4Encoder.GetPosition() < drivedistance){
+      if(motor4Encoder.GetPosition() < drivedistance2){
 
         motor4.Set(0.3);
       }
@@ -307,11 +308,58 @@ AHRS *ahrs;
 
     }
 
-  }
+    
+     double xAxisRate = m_stickDrive.GetX();   //Balancing code?
+     double yAxisRate = m_stickDrive.GetY();
+     double pitchAngleDegrees = ahrs->GetPitch();
+     double rollAngleDegrees = ahrs->GetRoll();
 
-    if(SelectedAuto == 3){  //FAR RIGHT BLUE?????????? w/ block on ground level????? idk if it'll work but i tried
+      if ( !autoBalanceXMode &&
+       (fabs(pitchAngleDegrees) >=
+       fabs(kOffBalanceThresholdDegrees))) {
+       autoBalanceXMode = true;
+      }
+      else if ( autoBalanceXMode &&
+        (fabs(pitchAngleDegrees) <=
+        fabs(kOnBalanceThresholdDegrees))) {
+        autoBalanceXMode = false;
+      }
+      if ( !autoBalanceYMode &&
+        (fabs(pitchAngleDegrees) >=
+        fabs(kOffBalanceThresholdDegrees))) {
+        autoBalanceYMode = true;
+      }
+      else if ( autoBalanceYMode &&
+        (fabs(pitchAngleDegrees) <=
+        fabs(kOnBalanceThresholdDegrees))) {
+        autoBalanceYMode = false;
+      }
 
-      if(motor2Encoder.GetPosition() < drivedistanceB){
+      if ( autoBalanceXMode ) {
+       double pitchAngleRadians = pitchAngleDegrees * (M_PI / 180.0);
+        xAxisRate = sin(pitchAngleRadians) * -1;
+      }
+      if ( autoBalanceYMode ) {
+       double rollAngleRadians = rollAngleDegrees * (M_PI / 180.0);
+       yAxisRate = sin(rollAngleRadians) * -1;
+      }
+
+     // try {
+     // Use the joystick X axis for lateral movement, Y axis for forward movement, and Z axis for rotation.
+    //   m_robotDrive.DriveCartesian(xAxisRate, yAxisRate, m_stickDrive.GetZ());
+    //  } 
+    //  catch (exception& ex ) {
+    //   string err_string = "Drive system error:  ";
+    //   err_string += ex.what();
+    //   DriverStation::ReportError(err_string.c_str());
+    //  }
+     // Wait(0.005); // wait 5ms to avoid hogging CPU cycle
+
+  };
+
+    if(SelectedAuto == 3){  //FAR RIGHT BLUE w/ block on ground level????? idk if it'll work but i tried, i need a thing thats like do this and then this.
+
+      if(motor2Encoder.GetPosition() < drivedistance3){
 
         motor2.Set(0.3);
       
@@ -323,7 +371,19 @@ AHRS *ahrs;
       
       }
 
-      if(motor2Encoder.GetPosition() < drivedistance3){ 
+       if(motor4Encoder.GetPosition() < drivedistance3){
+
+        motor4.Set(0.3);
+      
+      }
+      else{
+
+        
+        motor4.Set(0);
+      
+      }
+
+      if(motor2Encoder.GetPosition() < drivedistance4){ 
 
         motor2.Set(0.3);
       }
@@ -334,7 +394,7 @@ AHRS *ahrs;
 
       }
 
-      if(motor4Encoder.GetPosition() < drivedistance3){
+      if(motor4Encoder.GetPosition() < drivedistance4){
 
         motor4.Set(0.3);
       }
@@ -351,7 +411,7 @@ AHRS *ahrs;
   // Teleop Area
   void TeleopInit() override {
 
-    frc::SmartDashboard::PutNumber("Selected Auto", 0);
+    
 
   }
 
@@ -361,6 +421,40 @@ AHRS *ahrs;
 
   m_robotDrive.ArcadeDrive(Deadband(-m_stickDrive.GetY(), 0.05, 2), Deadband(m_stickDrive.GetZ(), 0.05)); 
 
+     double xAxisRate = m_stickDrive.GetX();   //Balancing code?
+     double yAxisRate = m_stickDrive.GetY();
+     double pitchAngleDegrees = ahrs->GetPitch();
+     double rollAngleDegrees = ahrs->GetRoll();
+
+      if ( !autoBalanceXMode &&
+       (fabs(pitchAngleDegrees) >=
+       fabs(kOffBalanceThresholdDegrees))) {
+       autoBalanceXMode = true;
+      }
+      else if ( autoBalanceXMode &&
+        (fabs(pitchAngleDegrees) <=
+        fabs(kOnBalanceThresholdDegrees))) {
+        autoBalanceXMode = false;
+      }
+      if ( !autoBalanceYMode &&
+        (fabs(pitchAngleDegrees) >=
+        fabs(kOffBalanceThresholdDegrees))) {
+        autoBalanceYMode = true;
+      }
+      else if ( autoBalanceYMode &&
+        (fabs(pitchAngleDegrees) <=
+        fabs(kOnBalanceThresholdDegrees))) {
+        autoBalanceYMode = false;
+      }
+
+      if ( autoBalanceXMode ) {
+       double pitchAngleRadians = pitchAngleDegrees * (M_PI / 180.0);
+        xAxisRate = sin(pitchAngleRadians) * -1;
+      }
+      if ( autoBalanceYMode ) {
+       double rollAngleRadians = rollAngleDegrees * (M_PI / 180.0);
+       yAxisRate = sin(rollAngleRadians) * -1;
+      }
 
   
   if (m_stickOperator.GetRightBumperPressed()){
@@ -380,19 +474,34 @@ AHRS *ahrs;
    }
 
   //pnuematics for INTAKEEEEEE
-  intakeS.Set(frc::DoubleSolenoid::Value::kReverse);
-
-if (m_stickOperator.GetXButtonPressed()) {
+intakeS.Set(frc::DoubleSolenoid::Value::kReverse);
+    if (m_stickOperator.GetXButtonPressed()) {
    intakeS.Toggle();
 }
 
 
-  intakeN.Set(frc::DoubleSolenoid::Value::kReverse);
-
-if (m_stickOperator.GetXButtonPressed()) {
+intakeN.Set(frc::DoubleSolenoid::Value::kReverse);
+    if (m_stickOperator.GetXButtonPressed()) {
    intakeN.Toggle();
 }
-//end pnuematics
+//end pnuematics, when pressed it will either go up or go down, depending on current orientation 
+
+  if (m_stickOperator.GetLeftBumperPressed()){
+   motor13.Set(0.5); // When pressed the intake turns on
+  }
+
+   if (m_stickOperator.GetLeftBumperReleased()) {
+   motor13.Set(0); 
+   } // When released the intake turns off
+
+   if(m_stickOperator.GetLeftBumperPressed()){
+    motor14.Set(-0.5);
+   }
+
+   if(m_stickOperator.GetLeftBumperReleased()){
+    motor14.Set(0);
+   }
+
 
   //start PID control
   //hi scarlette this is for the driver station thing 
