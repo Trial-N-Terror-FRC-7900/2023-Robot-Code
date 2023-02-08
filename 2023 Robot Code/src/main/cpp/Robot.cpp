@@ -66,12 +66,12 @@ static const double kOnBalanceThresholdDegrees  = 5.0f;
 
 class Robot : public frc::TimedRobot {
 
-rev::CANSparkMax motor2{2, rev::CANSparkMax::MotorType::kBrushless};
-rev::CANSparkMax motor3{3, rev::CANSparkMax::MotorType::kBrushless};
-rev::CANSparkMax motor4{4, rev::CANSparkMax::MotorType::kBrushless};
-rev::CANSparkMax motor5{5, rev::CANSparkMax::MotorType::kBrushless};
-rev::CANSparkMax motor7{7, rev::CANSparkMax::MotorType::kBrushless};
-rev::CANSparkMax motor8{8, rev::CANSparkMax::MotorType::kBrushless};
+rev::CANSparkMax rightLeadmotor{2, rev::CANSparkMax::MotorType::kBrushless};
+rev::CANSparkMax rightFollowmotor{3, rev::CANSparkMax::MotorType::kBrushless};
+rev::CANSparkMax leftLeadmotor{4, rev::CANSparkMax::MotorType::kBrushless};
+rev::CANSparkMax leftFollowmotor{5, rev::CANSparkMax::MotorType::kBrushless};
+rev::CANSparkMax armRotate{7, rev::CANSparkMax::MotorType::kBrushless};
+rev::CANSparkMax armRotate2{8, rev::CANSparkMax::MotorType::kBrushless};
 
 frc::Compressor phCompressor{15, frc::PneumaticsModuleType::REVPH};
 
@@ -82,24 +82,24 @@ frc::DoubleSolenoid intakeN{15, frc::PneumaticsModuleType::REVPH, 4, 5};
 double scale = 250, offset = -25;
 //frc::AnalogPotentiometer pressureTransducer{1, scale, offset};
 
-WPI_VictorSPX motor9{9};
-WPI_VictorSPX motor10{10}; 
-WPI_VictorSPX motor13{13};
-WPI_VictorSPX motor14{14}; 
-WPI_TalonSRX motor6{6};
+WPI_VictorSPX intakemotorF{9};
+WPI_VictorSPX intakemotorR{10}; 
+WPI_VictorSPX handF{13};
+WPI_VictorSPX handR{14}; 
+WPI_TalonSRX armExtend{6};
 
-frc::DifferentialDrive m_robotDrive{motor2, motor4};
+frc::DifferentialDrive m_robotDrive{rightLeadmotor, leftLeadmotor};
 frc::Joystick m_stickDrive{0};
 frc::XboxController m_stickOperator{1};
 
-rev::SparkMaxPIDController m_pidController = motor7.GetPIDController();
-rev::SparkMaxRelativeEncoder motor8encoder = motor8.GetEncoder(rev::SparkMaxRelativeEncoder::Type::kHallSensor, 42); //place holder for now to make sure the code was correct
+rev::SparkMaxPIDController m_pidController = armRotate.GetPIDController();
+rev::SparkMaxRelativeEncoder motor8encoder = armRotate2.GetEncoder(rev::SparkMaxRelativeEncoder::Type::kHallSensor, 42); //place holder for now to make sure the code was correct
 
-rev::SparkMaxLimitSwitch forwardLimit = motor7.GetForwardLimitSwitch(rev::SparkMaxLimitSwitch::Type::kNormallyClosed);
-rev::SparkMaxLimitSwitch reverseLimit = motor8.GetReverseLimitSwitch(rev::SparkMaxLimitSwitch::Type::kNormallyClosed);
+rev::SparkMaxLimitSwitch forwardLimit = armRotate.GetForwardLimitSwitch(rev::SparkMaxLimitSwitch::Type::kNormallyClosed);
+rev::SparkMaxLimitSwitch reverseLimit = armRotate2.GetReverseLimitSwitch(rev::SparkMaxLimitSwitch::Type::kNormallyClosed);
 
-rev::SparkMaxRelativeEncoder motor2Encoder = motor2.GetEncoder(rev::SparkMaxRelativeEncoder::Type::kHallSensor, 42);
-rev::SparkMaxRelativeEncoder motor4Encoder = motor4.GetEncoder(rev::SparkMaxRelativeEncoder::Type::kHallSensor, 42);
+rev::SparkMaxRelativeEncoder motor2Encoder = rightLeadmotor.GetEncoder(rev::SparkMaxRelativeEncoder::Type::kHallSensor, 42);
+rev::SparkMaxRelativeEncoder motor4Encoder = leftLeadmotor.GetEncoder(rev::SparkMaxRelativeEncoder::Type::kHallSensor, 42);
 
 
 double drivedistance = 6;
@@ -113,19 +113,7 @@ AHRS *ahrs;
     bool autoBalanceXMode; //Auto balance stuff (not sure what it does)
     bool autoBalanceYMode;
 
-     
 
-
-
-//frc::sim::SingleJointedArmSim ArmSim{motor6,
-                                     // kArmGearing,
-                                     // kCarriageMass,
-                                      //kArmDrumRadius,
-                                     // kMinArmHeight,
-                                     // kMaxArmHeight,
-                                     // true,
-                                     // {0.01}};
-  //frc::sim::EncoderSim m_encoderSim{m_encoder};
 
   double kP = 0.1, kI = 1e-4, kD = 1, kIz = 0, kFF = 0, kMaxOutput = 1, kMinOutput = -1;
 
@@ -139,11 +127,11 @@ AHRS *ahrs;
 
  public: 
   void RobotInit() override {
-    motor2.RestoreFactoryDefaults();
-    motor3.RestoreFactoryDefaults();
-    motor4.RestoreFactoryDefaults();
-    motor5.RestoreFactoryDefaults();
-    motor9.ConfigFactoryDefault();
+    rightLeadmotor.RestoreFactoryDefaults();
+    rightFollowmotor.RestoreFactoryDefaults();
+    leftLeadmotor.RestoreFactoryDefaults();
+    leftFollowmotor.RestoreFactoryDefaults();
+    intakemotorF.ConfigFactoryDefault();
     // We need to invert one side of the drivetrain so that positive voltages
     // result in both sides moving forward. Depending on how your robot's
     // gearbox is constructed, you might have to invert the left side instead.
@@ -184,13 +172,48 @@ AHRS *ahrs;
 
     
     m_robotDrive.SetDeadband(0);
-    motor3.Follow(motor2);
-    motor5.Follow(motor4);
+    rightFollowmotor.Follow(rightLeadmotor);
+    leftFollowmotor.Follow(leftLeadmotor);
 
 
     intakeS.Set(frc::DoubleSolenoid::Value::kOff); //These are supposed to be the different levels it goes or something.
     intakeS.Set(frc::DoubleSolenoid::Value::kForward);
     intakeS.Set(frc::DoubleSolenoid::Value::kReverse);
+
+    int _loops = 0;
+	  bool _lastButton1 = false;
+	  /** save the target position to servo to */
+	  double targetPositionRotations;
+
+    /* Factory Default all hardware to prevent unexpected behaviour */
+		armExtend.ConfigFactoryDefault();
+
+    /**
+		 * Grab the 360 degree position of the MagEncoder's absolute
+		 * position, and intitally set the relative sensor to match.
+		 */
+		int absolutePosition = armExtend.GetSensorCollection().GetPulseWidthPosition();
+		/* use the low level API to set the quad encoder signal */
+		armExtend.SetSelectedSensorPosition(absolutePosition, kPIDLoopIdx,
+				kTimeoutMs);
+
+		/* choose the sensor and sensor direction */
+		armExtend.ConfigSelectedFeedbackSensor(
+				FeedbackDevice::CTRE_MagEncoder_Relative, kPIDLoopIdx,
+				kTimeoutMs);
+		armExtend.SetSensorPhase(true);
+
+		/* set the peak and nominal outputs, 12V means full */
+		armExtend.ConfigNominalOutputForward(0, kTimeoutMs);
+		armExtend.ConfigNominalOutputReverse(0, kTimeoutMs);
+		armExtend.ConfigPeakOutputForward(1, kTimeoutMs);
+		armExtend.ConfigPeakOutputReverse(-1, kTimeoutMs);
+
+		/* set closed loop gains in slot0 */
+		armExtend.Config_kF(kPIDLoopIdx, 0.0, kTimeoutMs);
+		armExtend.Config_kP(kPIDLoopIdx, 0.1, kTimeoutMs);
+		armExtend.Config_kI(kPIDLoopIdx, 0.0, kTimeoutMs);
+		armExtend.Config_kD(kPIDLoopIdx, 0.0, kTimeoutMs);
 
     // product-specific voltage->pressure conversion, see product manual
 // in this case, 250(V/5)-25
@@ -227,7 +250,7 @@ AHRS *ahrs;
     std::string err_msg("Error instantiating navX MXP:  " + what_string);
     const char * p_err_msg = err_msg.c_str();
   }
-        autoBalanceXMode = false; //auto stuff
+        autoBalanceXMode = false; //auto balance stuff
         autoBalanceYMode = false;
 
 
@@ -262,23 +285,23 @@ AHRS *ahrs;
 
       if(motor2Encoder.GetPosition() < drivedistance){   //Driving to set distance
 
-        motor2.Set(0.3);
+        rightLeadmotor.Set(0.3);
       }
 
       else{
 
-        motor2.Set(0);  //stopping once reaching set distance
+        rightLeadmotor.Set(0);  //stopping once reaching set distance
 
       }
 
       if(motor4Encoder.GetPosition() < drivedistance){
 
-        motor4.Set(0.3);
+        rightLeadmotor.Set(0.3);
       }
 
      else{
 
-      motor4.Set(0);
+        rightLeadmotor.Set(0);
 
     }
 
@@ -288,23 +311,23 @@ AHRS *ahrs;
 
     if(motor2Encoder.GetPosition() < drivedistance2){   //Driving to set distance
 
-        motor2.Set(0.3);
+        rightLeadmotor.Set(0.3);
       }
 
       else{
 
-        motor2.Set(0);  //stopping once reaching set distance
+        rightLeadmotor.Set(0);  //stopping once reaching set distance
 
       }
 
       if(motor4Encoder.GetPosition() < drivedistance2){
 
-        motor4.Set(0.3);
+        leftLeadmotor.Set(0.3);
       }
 
      else{
 
-      motor4.Set(0);
+      leftLeadmotor.Set(0);
 
     }
 
@@ -361,47 +384,47 @@ AHRS *ahrs;
 
       if(motor2Encoder.GetPosition() < drivedistance3){
 
-        motor2.Set(0.3);
+        rightLeadmotor.Set(0.3);
       
       }
       else{
 
         
-        motor2.Set(0);
+        rightLeadmotor.Set(0);
       
       }
 
        if(motor4Encoder.GetPosition() < drivedistance3){
 
-        motor4.Set(0.3);
+        leftLeadmotor.Set(0.3);
       
       }
       else{
 
         
-        motor4.Set(0);
+        leftLeadmotor.Set(0);
       
       }
 
       if(motor2Encoder.GetPosition() < drivedistance4){ 
 
-        motor2.Set(0.3);
+        rightLeadmotor.Set(0.3);
       }
 
       else{
 
-        motor2.Set(0); 
+        rightLeadmotor.Set(0); 
 
       }
 
       if(motor4Encoder.GetPosition() < drivedistance4){
 
-        motor4.Set(0.3);
+        leftLeadmotor.Set(0.3);
       }
 
      else{
 
-      motor4.Set(0);
+      leftLeadmotor.Set(0);
 
     }
 
@@ -458,19 +481,19 @@ AHRS *ahrs;
 
   
   if (m_stickOperator.GetRightBumperPressed()){
-   motor9.Set(0.5); // When pressed the intake turns on
+   intakemotorF.Set(0.5); // When pressed the intake turns on
   }
 
    if (m_stickOperator.GetRightBumperReleased()) {
-   motor9.Set(0); 
+   intakemotorF.Set(0); 
    } // When released the intake turns off
 
    if(m_stickOperator.GetRightBumperPressed()){
-    motor10.Set(-0.5);
+    intakemotorR.Set(-0.5);
    }
 
    if(m_stickOperator.GetRightBumperReleased()){
-    motor10.Set(0);
+    intakemotorR.Set(0);
    }
 
   //pnuematics for INTAKEEEEEE
@@ -487,20 +510,59 @@ intakeN.Set(frc::DoubleSolenoid::Value::kReverse);
 //end pnuematics, when pressed it will either go up or go down, depending on current orientation 
 
   if (m_stickOperator.GetLeftBumperPressed()){
-   motor13.Set(0.5); // When pressed the intake turns on
+   handF.Set(0.5); // When pressed the intake turns on
   }
 
    if (m_stickOperator.GetLeftBumperReleased()) {
-   motor13.Set(0); 
+   handF.Set(0); 
    } // When released the intake turns off
 
    if(m_stickOperator.GetLeftBumperPressed()){
-    motor14.Set(-0.5);
+    handR.Set(-0.5);
    }
 
    if(m_stickOperator.GetLeftBumperReleased()){
-    motor14.Set(0);
+    handR.Set(0);
    }
+
+   /* get gamepad axis */
+		double leftYstick = m_stickOperator.GetY();
+		double motorOutput = armExtend.GetMotorOutputPercent();
+		bool button1 = m_stickOperator.GetRawButton(1);
+		bool button2 = m_stickOperator.GetRawButton(2);
+		/* prepare line to print */
+		_sb.append("\tout:");
+		_sb.append(std::to_string(motorOutput));
+		_sb.append("\tpos:");
+		_sb.append(std::to_string(armExtend.GetSelectedSensorPosition(kPIDLoopIdx)));
+		/* on button1 press enter closed-loop mode on target position */
+		if (!_lastButton1 && button1) {
+			/* Position mode - button just pressed */
+			targetPositionRotations = leftYstick * 10.0 * 4096; /* 10 Rotations in either direction */
+			armExtend.Set(ControlMode::Position, targetPositionRotations); /* 10 rotations in either direction */
+		}
+		/* on button2 just straight drive */
+		if (button2) {
+			/* Percent voltage mode */
+			armExtend.Set(ControlMode::PercentOutput, leftYstick);
+		}
+		/* if Talon is in position closed-loop, print some more info */
+		if (armExtend.GetControlMode() == ControlMode::Position) {
+			/* append more signals to print when in speed mode. */
+			_sb.append("\terrNative:");
+			_sb.append(std::to_string(armExtend.GetClosedLoopError(kPIDLoopIdx)));
+			_sb.append("\ttrg:");
+			_sb.append(std::to_string(targetPositionRotations));
+		}
+		/* print every ten loops, printing too much too fast is generally bad for performance */
+		if (++_loops >= 10) {
+			_loops = 0;
+			printf("%s\n", _sb.c_str());
+		}
+		_sb.clear();
+		/* save button state for on press detect */
+		_lastButton1 = button1;
+  
 
 
   //start PID control
