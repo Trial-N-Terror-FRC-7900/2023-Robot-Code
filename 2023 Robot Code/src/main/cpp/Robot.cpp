@@ -16,7 +16,7 @@
 #include "AHRS.h"
 #include <units/pressure.h>
 #include <frc/DoubleSolenoid.h>
-
+#include <iostream>
 
 
 
@@ -98,8 +98,8 @@ rev::SparkMaxRelativeEncoder motor8encoder = armRotate2.GetEncoder(rev::SparkMax
 rev::SparkMaxLimitSwitch forwardLimit = armRotate.GetForwardLimitSwitch(rev::SparkMaxLimitSwitch::Type::kNormallyClosed);
 rev::SparkMaxLimitSwitch reverseLimit = armRotate2.GetReverseLimitSwitch(rev::SparkMaxLimitSwitch::Type::kNormallyClosed);
 
-rev::SparkMaxRelativeEncoder motor2Encoder = rightLeadmotor.GetEncoder(rev::SparkMaxRelativeEncoder::Type::kHallSensor, 42);
-rev::SparkMaxRelativeEncoder motor4Encoder = leftLeadmotor.GetEncoder(rev::SparkMaxRelativeEncoder::Type::kHallSensor, 42);
+rev::SparkMaxRelativeEncoder rightEncoder = rightLeadmotor.GetEncoder(rev::SparkMaxRelativeEncoder::Type::kHallSensor, 42);
+rev::SparkMaxRelativeEncoder leftEncoder = leftLeadmotor.GetEncoder(rev::SparkMaxRelativeEncoder::Type::kHallSensor, 42);
 
 
 double drivedistance = 6;
@@ -266,8 +266,8 @@ AHRS *ahrs;
   // Auto Area
   void AutonomousInit() override {
 
-  motor2Encoder.SetPosition(0); 
-  motor4Encoder.SetPosition(0);
+  rightEncoder.SetPosition(0); 
+  leftEncoder.SetPosition(0);
   ahrs->Reset();
 
   drivedistance = (drivedistance * 12)/(6 * 3.141592635) * (34/18) * (62/12) * (42); //converting from ft to counts of the encoder
@@ -282,8 +282,35 @@ AHRS *ahrs;
    
     if(SelectedAuto == 1){  //just driving backwards
 
+switch(0) {
+case 0:
+  if(rightEncoder.GetPosition() < drivedistance){ 
 
-      if(motor2Encoder.GetPosition() < drivedistance){   //Driving to set distance
+        rightLeadmotor.Set(0.3);
+      }
+  if(leftEncoder.GetPosition() < drivedistance){
+
+        rightLeadmotor.Set(0.3);
+      }
+case 1:
+-Deadband(NAVX_REG_PITCH_H*3, 0.5);
+
+case 2:
+if(rightEncoder.GetPosition() > drivedistance){   
+
+        rightLeadmotor.Set(0);
+      }
+if(leftEncoder.GetPosition() > drivedistance){   
+
+        rightLeadmotor.Set(0);
+      }
+
+
+Defualt :
+//run if none of the above if true
+}
+
+     if(rightEncoder.GetPosition() < drivedistance){   //Driving to set distance
 
         rightLeadmotor.Set(0.3);
       }
@@ -294,7 +321,7 @@ AHRS *ahrs;
 
       }
 
-      if(motor4Encoder.GetPosition() < drivedistance){
+      if(leftEncoder.GetPosition() < drivedistance){
 
         rightLeadmotor.Set(0.3);
       }
@@ -309,7 +336,7 @@ AHRS *ahrs;
 
   if(SelectedAuto == 2){   //Auto balance
 
-    if(motor2Encoder.GetPosition() < drivedistance2){   //Driving to set distance
+    if(rightEncoder.GetPosition() < drivedistance2){   //Driving to set distance
 
         rightLeadmotor.Set(0.3);
       }
@@ -320,7 +347,7 @@ AHRS *ahrs;
 
       }
 
-      if(motor4Encoder.GetPosition() < drivedistance2){
+      if(leftEncoder.GetPosition() < drivedistance2){
 
         leftLeadmotor.Set(0.3);
       }
@@ -382,7 +409,7 @@ AHRS *ahrs;
 
     if(SelectedAuto == 3){  //FAR RIGHT BLUE w/ block on ground level????? idk if it'll work but i tried, i need a thing thats like do this and then this.
 
-      if(motor2Encoder.GetPosition() < drivedistance3){
+      if(rightEncoder.GetPosition() < drivedistance3){
 
         rightLeadmotor.Set(0.3);
       
@@ -394,7 +421,7 @@ AHRS *ahrs;
       
       }
 
-       if(motor4Encoder.GetPosition() < drivedistance3){
+       if(leftEncoder.GetPosition() < drivedistance3){
 
         leftLeadmotor.Set(0.3);
       
@@ -406,7 +433,7 @@ AHRS *ahrs;
       
       }
 
-      if(motor2Encoder.GetPosition() < drivedistance4){ 
+      if(rightEncoder.GetPosition() < drivedistance4){ 
 
         rightLeadmotor.Set(0.3);
       }
@@ -417,7 +444,7 @@ AHRS *ahrs;
 
       }
 
-      if(motor4Encoder.GetPosition() < drivedistance4){
+      if(leftEncoder.GetPosition() < drivedistance4){
 
         leftLeadmotor.Set(0.3);
       }
@@ -526,7 +553,7 @@ intakeN.Set(frc::DoubleSolenoid::Value::kReverse);
    }
 
    /* get gamepad axis */
-		double leftYstick = m_stickOperator.GetY();
+		double leftYstick = m_stickOperator.GetYButtonPressed();
 		double motorOutput = armExtend.GetMotorOutputPercent();
 		bool button1 = m_stickOperator.GetRawButton(1);
 		bool button2 = m_stickOperator.GetRawButton(2);
