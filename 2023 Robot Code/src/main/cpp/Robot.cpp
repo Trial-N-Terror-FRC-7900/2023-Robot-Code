@@ -87,6 +87,12 @@ WPI_VictorSPX intakemotorR{10};
 WPI_VictorSPX handF{13};
 WPI_VictorSPX handR{14}; 
 WPI_TalonSRX armExtend{6};
+std::string _sb;
+int kPIDLoopIdx;
+bool kTimeoutMs;
+int targetPositionRotations;
+int _loops = 0;
+bool _lastButton1 = false;
 
 frc::DifferentialDrive m_robotDrive{rightLeadmotor, leftLeadmotor};
 frc::Joystick m_stickDrive{0};
@@ -188,6 +194,7 @@ AHRS *ahrs;
     /* Factory Default all hardware to prevent unexpected behaviour */
 		armExtend.ConfigFactoryDefault();
 
+
     /**
 		 * Grab the 360 degree position of the MagEncoder's absolute
 		 * position, and intitally set the relative sensor to match.
@@ -196,6 +203,7 @@ AHRS *ahrs;
 		/* use the low level API to set the quad encoder signal */
 		armExtend.SetSelectedSensorPosition(absolutePosition, kPIDLoopIdx,
 				kTimeoutMs);
+     //armExtend.SetSelectedSensorPosition(absolutePosition, int pidIdx = 1, int timeoutMs = 50); ?
 
 		/* choose the sensor and sensor direction */
 		armExtend.ConfigSelectedFeedbackSensor(
@@ -293,7 +301,7 @@ case 0:
         rightLeadmotor.Set(0.3);
       }
 case 1:
--Deadband(NAVX_REG_PITCH_H*3, 0.5);
+-Deadband(ahrs->GetPitch()*3, 0.5);
 
 case 2:
 if(rightEncoder.GetPosition() > drivedistance){   
@@ -306,7 +314,7 @@ if(leftEncoder.GetPosition() > drivedistance){
       }
 
 
-Defualt :
+default:
 //run if none of the above if true
 }
 
@@ -336,63 +344,33 @@ Defualt :
 
   if(SelectedAuto == 2){   //Auto balance
 
-    if(rightEncoder.GetPosition() < drivedistance2){   //Driving to set distance
+  switch(0) {case 0:
+  if(rightEncoder.GetPosition() < drivedistance2){ 
 
         rightLeadmotor.Set(0.3);
       }
+  if(leftEncoder.GetPosition() < drivedistance2){
 
-      else{
+        rightLeadmotor.Set(0.3);
+      }
+case 1:
+-Deadband(ahrs->GetPitch()*3, 0.5);
 
-        rightLeadmotor.Set(0);  //stopping once reaching set distance
+case 2:
+if(rightEncoder.GetPosition() > drivedistance2){   
 
+        rightLeadmotor.Set(0);
+      }
+if(leftEncoder.GetPosition() > drivedistance2){   
+
+        rightLeadmotor.Set(0);
       }
 
-      if(leftEncoder.GetPosition() < drivedistance2){
 
-        leftLeadmotor.Set(0.3);
-      }
+default:
+//run if none of the above if true
+}
 
-     else{
-
-      leftLeadmotor.Set(0);
-
-    }
-
-    
-     double xAxisRate = m_stickDrive.GetX();   //Balancing code?
-     double yAxisRate = m_stickDrive.GetY();
-     double pitchAngleDegrees = ahrs->GetPitch();
-     double rollAngleDegrees = ahrs->GetRoll();
-
-      if ( !autoBalanceXMode &&
-       (fabs(pitchAngleDegrees) >=
-       fabs(kOffBalanceThresholdDegrees))) {
-       autoBalanceXMode = true;
-      }
-      else if ( autoBalanceXMode &&
-        (fabs(pitchAngleDegrees) <=
-        fabs(kOnBalanceThresholdDegrees))) {
-        autoBalanceXMode = false;
-      }
-      if ( !autoBalanceYMode &&
-        (fabs(pitchAngleDegrees) >=
-        fabs(kOffBalanceThresholdDegrees))) {
-        autoBalanceYMode = true;
-      }
-      else if ( autoBalanceYMode &&
-        (fabs(pitchAngleDegrees) <=
-        fabs(kOnBalanceThresholdDegrees))) {
-        autoBalanceYMode = false;
-      }
-
-      if ( autoBalanceXMode ) {
-       double pitchAngleRadians = pitchAngleDegrees * (M_PI / 180.0);
-        xAxisRate = sin(pitchAngleRadians) * -1;
-      }
-      if ( autoBalanceYMode ) {
-       double rollAngleRadians = rollAngleDegrees * (M_PI / 180.0);
-       yAxisRate = sin(rollAngleRadians) * -1;
-      }
 
      // try {
      // Use the joystick X axis for lateral movement, Y axis for forward movement, and Z axis for rotation.
