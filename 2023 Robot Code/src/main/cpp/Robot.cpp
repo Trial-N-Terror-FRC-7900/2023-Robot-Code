@@ -87,6 +87,7 @@ WPI_VictorSPX intakemotorR{10};
 WPI_VictorSPX handF{13};
 WPI_VictorSPX handR{14}; 
 WPI_TalonSRX armExtend{6};
+
 std::string _sb;
 int kPIDLoopIdx;
 bool kTimeoutMs;
@@ -113,6 +114,10 @@ double drivedistance2 = 7;
 double drivedistance3 = -12; //if we are in the far RIGHT of BLUE
 double drivedistance4 = 0.5; //pushing block/cone/whatever fowrard MAYBEEEEEEEEEEE
 double SelectedAuto = 0; //selected auto
+
+int switchOne = 0; //not completed? Needs work I believe.
+int switchTwo = 2;
+int switchThree = 3;
 
 AHRS *ahrs;
 
@@ -290,7 +295,7 @@ AHRS *ahrs;
    
     if(SelectedAuto == 1){  //just driving backwards
 
-switch(0) {
+switch(switchOne) {
 case 0:
   if(rightEncoder.GetPosition() < drivedistance){ 
 
@@ -303,19 +308,6 @@ case 0:
 case 1:
 -Deadband(ahrs->GetPitch()*3, 0.5);
 
-case 2:
-if(rightEncoder.GetPosition() > drivedistance){   
-
-        rightLeadmotor.Set(0);
-      }
-if(leftEncoder.GetPosition() > drivedistance){   
-
-        rightLeadmotor.Set(0);
-      }
-
-
-default:
-//run if none of the above if true
 }
 
      if(rightEncoder.GetPosition() < drivedistance){   //Driving to set distance
@@ -338,37 +330,36 @@ default:
 
         rightLeadmotor.Set(0);
 
-    }
+     }
 
-  }
+    };
 
   if(SelectedAuto == 2){   //Auto balance
 
-  switch(0) {case 0:
-  if(rightEncoder.GetPosition() < drivedistance2){ 
+  switch(switchTwo) {
+  case 0:
+    if(rightEncoder.GetPosition() < drivedistance2){ 
 
-        rightLeadmotor.Set(0.3);
-      }
-  if(leftEncoder.GetPosition() < drivedistance2){
+          rightLeadmotor.Set(0.3);
+        }
+    if(leftEncoder.GetPosition() < drivedistance2){
 
-        rightLeadmotor.Set(0.3);
-      }
+          rightLeadmotor.Set(0.3);
+        }
 case 1:
--Deadband(ahrs->GetPitch()*3, 0.5);
+      -Deadband(ahrs->GetPitch()*3, 0.5);
 
 case 2:
-if(rightEncoder.GetPosition() > drivedistance2){   
+    if(rightEncoder.GetPosition() > drivedistance2){   
 
         rightLeadmotor.Set(0);
       }
-if(leftEncoder.GetPosition() > drivedistance2){   
+    if(leftEncoder.GetPosition() > drivedistance2){   
 
         rightLeadmotor.Set(0);
       }
 
 
-default:
-//run if none of the above if true
 }
 
 
