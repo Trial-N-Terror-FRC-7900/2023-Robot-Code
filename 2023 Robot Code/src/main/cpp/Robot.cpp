@@ -310,27 +310,6 @@ case 1:
 
 }
 
-     if(rightEncoder.GetPosition() < drivedistance){   //Driving to set distance
-
-        rightLeadmotor.Set(0.3);
-      }
-
-      else{
-
-        rightLeadmotor.Set(0);  //stopping once reaching set distance
-
-      }
-
-      if(leftEncoder.GetPosition() < drivedistance){
-
-        rightLeadmotor.Set(0.3);
-      }
-
-     else{
-
-        rightLeadmotor.Set(0);
-
-     }
 
     };
 
