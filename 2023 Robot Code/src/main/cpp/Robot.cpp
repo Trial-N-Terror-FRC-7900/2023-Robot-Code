@@ -109,7 +109,7 @@ rev::SparkMaxRelativeEncoder rightEncoder = rightLeadmotor.GetEncoder(rev::Spark
 rev::SparkMaxRelativeEncoder leftEncoder = leftLeadmotor.GetEncoder(rev::SparkMaxRelativeEncoder::Type::kHallSensor, 42);
 
 
-double drivedistance = 6;
+double drivedistance = 10;
 double drivedistance2 = 7;
 double drivedistance3 = -12; //if we are in the far RIGHT of BLUE
 double drivedistance4 = 0.5; //pushing block/cone/whatever fowrard MAYBEEEEEEEEEEE
@@ -150,35 +150,35 @@ AHRS *ahrs;
     //m_rightMotor.SetInverted(true);
 
     //PID start
-    m_pidController.SetP(kP);
-    m_pidController.SetI(kI);
-    m_pidController.SetD(kD);
-    m_pidController.SetIZone(kIz);
-    m_pidController.SetFF(kFF);
-    m_pidController.SetOutputRange(kMinOutput, kMaxOutput);
+   // m_pidController.SetP(kP);
+    //m_pidController.SetI(kI);
+    //m_pidController.SetD(kD);
+    //m_pidController.SetIZone(kIz);
+   // m_pidController.SetFF(kFF);
+    //m_pidController.SetOutputRange(kMinOutput, kMaxOutput);
 
-    frc::SmartDashboard::PutNumber("P Gain", kP);
-    frc::SmartDashboard::PutNumber("I Gain", kI);
-    frc::SmartDashboard::PutNumber("D Gain", kD);
-    frc::SmartDashboard::PutNumber("I Zone", kIz);
-    frc::SmartDashboard::PutNumber("Feed Forward", kFF);
-    frc::SmartDashboard::PutNumber("Max Output", kMaxOutput);
-    frc::SmartDashboard::PutNumber("Min Output", kMinOutput);
-    frc::SmartDashboard::PutNumber("Set Rotations", 0);
+   // frc::SmartDashboard::PutNumber("P Gain", kP);
+   // frc::SmartDashboard::PutNumber("I Gain", kI);
+    //frc::SmartDashboard::PutNumber("D Gain", kD);
+   // frc::SmartDashboard::PutNumber("I Zone", kIz);
+   // frc::SmartDashboard::PutNumber("Feed Forward", kFF);
+   // frc::SmartDashboard::PutNumber("Max Output", kMaxOutput);
+   // frc::SmartDashboard::PutNumber("Min Output", kMinOutput);
+   // frc::SmartDashboard::PutNumber("Set Rotations", 0);
     //PID end
 
     frc::SmartDashboard::PutNumber("Selected Auto", 0);
 
     //Spark Maxes limit switches
-    forwardLimit.EnableLimitSwitch(false);
-    reverseLimit.EnableLimitSwitch(false);
-    frc::SmartDashboard::PutBoolean("Forward Limit Enabled", forwardLimit.IsLimitSwitchEnabled());
-    frc::SmartDashboard::PutBoolean("Reverse Limit Enabled", reverseLimit.IsLimitSwitchEnabled());
+   // forwardLimit.EnableLimitSwitch(false);
+  //  reverseLimit.EnableLimitSwitch(false);
+  //  frc::SmartDashboard::PutBoolean("Forward Limit Enabled", forwardLimit.IsLimitSwitchEnabled());
+   // frc::SmartDashboard::PutBoolean("Reverse Limit Enabled", reverseLimit.IsLimitSwitchEnabled());
 
     //phCompressor.SetClosedLoopControl(false);
 
-    bool enabled = phCompressor.Enabled();
-    bool pressureSwitch = phCompressor.GetPressureSwitchValue();
+   // bool enabled = phCompressor.Enabled();
+   // bool pressureSwitch = phCompressor.GetPressureSwitchValue();
     //double current = phCompressor.GetCurrent();
 
     
@@ -187,46 +187,46 @@ AHRS *ahrs;
     leftFollowmotor.Follow(leftLeadmotor);
 
 
-    intakeS.Set(frc::DoubleSolenoid::Value::kOff); //These are supposed to be the different levels it goes or something.
-    intakeS.Set(frc::DoubleSolenoid::Value::kForward);
-    intakeS.Set(frc::DoubleSolenoid::Value::kReverse);
+   // intakeS.Set(frc::DoubleSolenoid::Value::kOff); //These are supposed to be the different levels it goes or something.
+    //intakeS.Set(frc::DoubleSolenoid::Value::kForward);
+    //intakeS.Set(frc::DoubleSolenoid::Value::kReverse);
 
-    int _loops = 0;
-	  bool _lastButton1 = false;
+    //int _loops = 0;
+	 // bool _lastButton1 = false;
 	  /** save the target position to servo to */
-	  double targetPositionRotations;
+	 // double targetPositionRotations;
 
     /* Factory Default all hardware to prevent unexpected behaviour */
-		armExtend.ConfigFactoryDefault();
+		//armExtend.ConfigFactoryDefault();
 
 
     /**
 		 * Grab the 360 degree position of the MagEncoder's absolute
 		 * position, and intitally set the relative sensor to match.
 		 */
-		int absolutePosition = armExtend.GetSensorCollection().GetPulseWidthPosition();
+		//int absolutePosition = armExtend.GetSensorCollection().GetPulseWidthPosition();
 		/* use the low level API to set the quad encoder signal */
-		armExtend.SetSelectedSensorPosition(absolutePosition, kPIDLoopIdx,
-				kTimeoutMs);
+		//armExtend.SetSelectedSensorPosition(absolutePosition, kPIDLoopIdx,
+		//		kTimeoutMs);
      //armExtend.SetSelectedSensorPosition(absolutePosition, int pidIdx = 1, int timeoutMs = 50); ?
 
 		/* choose the sensor and sensor direction */
-		armExtend.ConfigSelectedFeedbackSensor(
-				FeedbackDevice::CTRE_MagEncoder_Relative, kPIDLoopIdx,
-				kTimeoutMs);
-		armExtend.SetSensorPhase(true);
+	//armExtend.ConfigSelectedFeedbackSensor(
+		//		FeedbackDevice::CTRE_MagEncoder_Relative, kPIDLoopIdx,
+		//		kTimeoutMs);
+	//	armExtend.SetSensorPhase(true);
 
 		/* set the peak and nominal outputs, 12V means full */
-		armExtend.ConfigNominalOutputForward(0, kTimeoutMs);
-		armExtend.ConfigNominalOutputReverse(0, kTimeoutMs);
-		armExtend.ConfigPeakOutputForward(1, kTimeoutMs);
-		armExtend.ConfigPeakOutputReverse(-1, kTimeoutMs);
+		//armExtend.ConfigNominalOutputForward(0, kTimeoutMs);
+	//	armExtend.ConfigNominalOutputReverse(0, kTimeoutMs);
+	//	armExtend.ConfigPeakOutputForward(1, kTimeoutMs);
+	//	armExtend.ConfigPeakOutputReverse(-1, kTimeoutMs);
 
 		/* set closed loop gains in slot0 */
-		armExtend.Config_kF(kPIDLoopIdx, 0.0, kTimeoutMs);
-		armExtend.Config_kP(kPIDLoopIdx, 0.1, kTimeoutMs);
-		armExtend.Config_kI(kPIDLoopIdx, 0.0, kTimeoutMs);
-		armExtend.Config_kD(kPIDLoopIdx, 0.0, kTimeoutMs);
+		//armExtend.Config_kF(kPIDLoopIdx, 0.0, kTimeoutMs);
+		//armExtend.Config_kP(kPIDLoopIdx, 0.1, kTimeoutMs);
+	//	armExtend.Config_kI(kPIDLoopIdx, 0.0, kTimeoutMs);
+		//armExtend.Config_kD(kPIDLoopIdx, 0.0, kTimeoutMs);
 
     // product-specific voltage->pressure conversion, see product manual
 // in this case, 250(V/5)-25
@@ -238,8 +238,8 @@ AHRS *ahrs;
 // scaled values in psi units
 //double psi = pressureTransducer.Get();
 
-    try
-  {
+   // try
+  //{
     /***********************************************************************
      * navX-MXP:
      * - Communication via RoboRIO MXP (SPI, I2C) and USB.            
@@ -255,16 +255,16 @@ AHRS *ahrs;
      * 
      * Multiple navX-model devices on a single robot are supported.
      ************************************************************************/
-    ahrs = new AHRS(frc::SPI::Port::kMXP);
-  }
-  catch (std::exception &ex)
-  {
-    std::string what_string = ex.what();
-    std::string err_msg("Error instantiating navX MXP:  " + what_string);
-    const char * p_err_msg = err_msg.c_str();
-  }
-        autoBalanceXMode = false; //auto balance stuff
-        autoBalanceYMode = false;
+  //  ahrs = new AHRS(frc::SPI::Port::kMXP);
+ // }
+ // catch (std::exception &ex)
+ // {
+  //  std::string what_string = ex.what();
+  //  std::string err_msg("Error instantiating navX MXP:  " + what_string);
+ //   const char * p_err_msg = err_msg.c_str();
+ // }
+  //      autoBalanceXMode = false; //auto balance stuff
+   //     autoBalanceYMode = false;
 
 
 
@@ -328,17 +328,6 @@ case 1:
 case 1:
       -Deadband(ahrs->GetPitch()*3, 0.5);
 
-case 2:
-    if(rightEncoder.GetPosition() > drivedistance2){   
-
-        rightLeadmotor.Set(0);
-      }
-    if(leftEncoder.GetPosition() > drivedistance2){   
-
-        rightLeadmotor.Set(0);
-      }
-
-
 }
 
 
@@ -355,57 +344,57 @@ case 2:
 
   };
 
-    if(SelectedAuto == 3){  //FAR RIGHT BLUE w/ block on ground level????? idk if it'll work but i tried, i need a thing thats like do this and then this.
+  //  if(SelectedAuto == 3){  //FAR RIGHT BLUE w/ block on ground level????? idk if it'll work but i tried, i need a thing thats like do this and then this.
 
-      if(rightEncoder.GetPosition() < drivedistance3){
+    //  if(rightEncoder.GetPosition() < drivedistance3){
 
-        rightLeadmotor.Set(0.3);
+    //    rightLeadmotor.Set(0.3);
       
-      }
-      else{
+    //  }
+      //else{
 
         
-        rightLeadmotor.Set(0);
+      //  rightLeadmotor.Set(0);
       
-      }
+     // }
 
-       if(leftEncoder.GetPosition() < drivedistance3){
+      // if(leftEncoder.GetPosition() < drivedistance3){
 
-        leftLeadmotor.Set(0.3);
+      //  leftLeadmotor.Set(0.3);
       
-      }
-      else{
+   //   }
+    //  else{
 
         
-        leftLeadmotor.Set(0);
+      //  leftLeadmotor.Set(0);
       
-      }
+    //  }
 
-      if(rightEncoder.GetPosition() < drivedistance4){ 
+   //   if(rightEncoder.GetPosition() < drivedistance4){ 
 
-        rightLeadmotor.Set(0.3);
-      }
+      //  rightLeadmotor.Set(0.3);
+    //  }
 
-      else{
+     // else{
 
-        rightLeadmotor.Set(0); 
+       // rightLeadmotor.Set(0); 
 
-      }
+    //  }
 
-      if(leftEncoder.GetPosition() < drivedistance4){
+    //  if(leftEncoder.GetPosition() < drivedistance4){
 
-        leftLeadmotor.Set(0.3);
-      }
+      //  leftLeadmotor.Set(0.3);
+     // }
 
-     else{
+     //else{
 
-      leftLeadmotor.Set(0);
+      //leftLeadmotor.Set(0);
 
-    }
+   //}
 
-}
+//};
 
-}
+};
   // Teleop Area
   void TeleopInit() override {
 
@@ -417,172 +406,171 @@ case 2:
     //double StickX = Deadband(-m_stick.GetX(), 0.05, 2);
     //double StickY = Deadband(-m_stick.GetY(), 0.05, 2);
 
-  m_robotDrive.ArcadeDrive(Deadband(-m_stickDrive.GetY(), 0.05, 2), Deadband(m_stickDrive.GetZ(), 0.05)); 
+  m_robotDrive.ArcadeDrive(Deadband(-m_stickDrive.GetY(), 0.05, 2), Deadband(m_stickDrive.GetZ(), 0.05, 2)); 
 
-     double xAxisRate = m_stickDrive.GetX();   //Balancing code?
-     double yAxisRate = m_stickDrive.GetY();
-     double pitchAngleDegrees = ahrs->GetPitch();
-     double rollAngleDegrees = ahrs->GetRoll();
+   //  double xAxisRate = m_stickDrive.GetX();   //Balancing code?
+    // double yAxisRate = m_stickDrive.GetY();
+    // double pitchAngleDegrees = ahrs->GetPitch();
+   //  double rollAngleDegrees = ahrs->GetRoll();
 
-      if ( !autoBalanceXMode &&
-       (fabs(pitchAngleDegrees) >=
-       fabs(kOffBalanceThresholdDegrees))) {
-       autoBalanceXMode = true;
-      }
-      else if ( autoBalanceXMode &&
-        (fabs(pitchAngleDegrees) <=
-        fabs(kOnBalanceThresholdDegrees))) {
-        autoBalanceXMode = false;
-      }
-      if ( !autoBalanceYMode &&
-        (fabs(pitchAngleDegrees) >=
-        fabs(kOffBalanceThresholdDegrees))) {
-        autoBalanceYMode = true;
-      }
-      else if ( autoBalanceYMode &&
-        (fabs(pitchAngleDegrees) <=
-        fabs(kOnBalanceThresholdDegrees))) {
-        autoBalanceYMode = false;
-      }
+   //   if ( !autoBalanceXMode &&
+   //    (fabs(pitchAngleDegrees) >=
+    //   fabs(kOffBalanceThresholdDegrees))) {
+    //   autoBalanceXMode = true;
+    //  }
+     // else if ( autoBalanceXMode &&
+     //   (fabs(pitchAngleDegrees) <=
+    //    fabs(kOnBalanceThresholdDegrees))) {
+    //    autoBalanceXMode = false;
+    ///  }
+     // if ( !autoBalanceYMode &&
+    //    (fabs(pitchAngleDegrees) >=
+      //  fabs(kOffBalanceThresholdDegrees))) {
+      //  autoBalanceYMode = true;
+    //  }
+   //   else if ( autoBalanceYMode &&
+   //     (fabs(pitchAngleDegrees) <=
+    //    fabs(kOnBalanceThresholdDegrees))) {
+    //    autoBalanceYMode = false;
+    //  }
 
-      if ( autoBalanceXMode ) {
-       double pitchAngleRadians = pitchAngleDegrees * (M_PI / 180.0);
-        xAxisRate = sin(pitchAngleRadians) * -1;
-      }
-      if ( autoBalanceYMode ) {
-       double rollAngleRadians = rollAngleDegrees * (M_PI / 180.0);
-       yAxisRate = sin(rollAngleRadians) * -1;
+    //  if ( autoBalanceXMode ) {
+    //   double pitchAngleRadians = pitchAngleDegrees * (M_PI / 180.0);
+    //    xAxisRate = sin(pitchAngleRadians) * -1;
+     // }
+    //  if ( autoBalanceYMode ) {
+    //   double rollAngleRadians = rollAngleDegrees * (M_PI / 180.0);
+   //    yAxisRate = sin(rollAngleRadians) * -1;
       }
 
   
-  if (m_stickOperator.GetRightBumperPressed()){
-   intakemotorF.Set(0.5); // When pressed the intake turns on
-  }
+ // if (m_stickOperator.GetRightBumperPressed()){
+ //  intakemotorF.Set(0.5); // When pressed the intake turns on
+ // }
 
-   if (m_stickOperator.GetRightBumperReleased()) {
-   intakemotorF.Set(0); 
-   } // When released the intake turns off
+ //  if (m_stickOperator.GetRightBumperReleased()) {
+//   intakemotorF.Set(0); 
+//   } // When released the intake turns off
 
-   if(m_stickOperator.GetRightBumperPressed()){
-    intakemotorR.Set(-0.5);
-   }
+ //  if(m_stickOperator.GetRightBumperPressed()){
+ //   intakemotorR.Set(-0.5);
+ //  }
 
-   if(m_stickOperator.GetRightBumperReleased()){
-    intakemotorR.Set(0);
-   }
+   //if(m_stickOperator.GetRightBumperReleased()){
+   // intakemotorR.Set(0);
+  // }
 
   //pnuematics for INTAKEEEEEE
-intakeS.Set(frc::DoubleSolenoid::Value::kReverse);
-    if (m_stickOperator.GetXButtonPressed()) {
-   intakeS.Toggle();
-}
+//intakeS.Set(frc::DoubleSolenoid::Value::kReverse);
+ //   if (m_stickOperator.GetXButtonPressed()) {
+ //  intakeS.Toggle();
+//}
 
 
-intakeN.Set(frc::DoubleSolenoid::Value::kReverse);
-    if (m_stickOperator.GetXButtonPressed()) {
-   intakeN.Toggle();
-}
+//intakeN.Set(frc::DoubleSolenoid::Value::kReverse);
+ //   if (m_stickOperator.GetXButtonPressed()) {
+  // intakeN.Toggle();
+//}
 //end pnuematics, when pressed it will either go up or go down, depending on current orientation 
 
-  if (m_stickOperator.GetLeftBumperPressed()){
-   handF.Set(0.5); // When pressed the intake turns on
-  }
+  //if (m_stickOperator.GetLeftBumperPressed()){
+  // handF.Set(0.5); // When pressed the intake turns on
+  //}
 
-   if (m_stickOperator.GetLeftBumperReleased()) {
-   handF.Set(0); 
-   } // When released the intake turns off
+   //if (m_stickOperator.GetLeftBumperReleased()) {
+  // handF.Set(0); 
+ //  } // When released the intake turns off
 
-   if(m_stickOperator.GetLeftBumperPressed()){
-    handR.Set(-0.5);
-   }
+ //  if(m_stickOperator.GetLeftBumperPressed()){
+ //   handR.Set(-0.5);
+ //  }
 
-   if(m_stickOperator.GetLeftBumperReleased()){
-    handR.Set(0);
-   }
+  // if(m_stickOperator.GetLeftBumperReleased()){
+ //   handR.Set(0);
+  // }
 
    /* get gamepad axis */
-		double leftYstick = m_stickOperator.GetYButtonPressed();
-		double motorOutput = armExtend.GetMotorOutputPercent();
-		bool button1 = m_stickOperator.GetRawButton(1);
-		bool button2 = m_stickOperator.GetRawButton(2);
+	//	double leftYstick = m_stickOperator.GetYButtonPressed();
+		//double motorOutput = armExtend.GetMotorOutputPercent();
+		//bool button1 = m_stickOperator.GetRawButton(1);
+		//bool button2 = m_stickOperator.GetRawButton(2);
 		/* prepare line to print */
-		_sb.append("\tout:");
-		_sb.append(std::to_string(motorOutput));
-		_sb.append("\tpos:");
-		_sb.append(std::to_string(armExtend.GetSelectedSensorPosition(kPIDLoopIdx)));
+		//_sb.append("\tout:");
+	//	_sb.append(std::to_string(motorOutput));
+	//	_sb.append("\tpos:");
+	//	_sb.append(std::to_string(armExtend.GetSelectedSensorPosition(kPIDLoopIdx)));
 		/* on button1 press enter closed-loop mode on target position */
-		if (!_lastButton1 && button1) {
+		//if (!_lastButton1 && button1) {
 			/* Position mode - button just pressed */
-			targetPositionRotations = leftYstick * 10.0 * 4096; /* 10 Rotations in either direction */
-			armExtend.Set(ControlMode::Position, targetPositionRotations); /* 10 rotations in either direction */
-		}
+	//		targetPositionRotations = leftYstick * 10.0 * 4096; /* 10 Rotations in either direction */
+		//	armExtend.Set(ControlMode::Position, targetPositionRotations); /* 10 rotations in either direction */
+	//	}
 		/* on button2 just straight drive */
-		if (button2) {
+	//	if (button2) {
 			/* Percent voltage mode */
-			armExtend.Set(ControlMode::PercentOutput, leftYstick);
-		}
+		//	armExtend.Set(ControlMode::PercentOutput, leftYstick);
+	//	}
 		/* if Talon is in position closed-loop, print some more info */
-		if (armExtend.GetControlMode() == ControlMode::Position) {
+	//	if (armExtend.GetControlMode() == ControlMode::Position) {
 			/* append more signals to print when in speed mode. */
-			_sb.append("\terrNative:");
-			_sb.append(std::to_string(armExtend.GetClosedLoopError(kPIDLoopIdx)));
-			_sb.append("\ttrg:");
-			_sb.append(std::to_string(targetPositionRotations));
-		}
+		//	_sb.append("\terrNative:");
+		//	_sb.append(std::to_string(armExtend.GetClosedLoopError(kPIDLoopIdx)));
+		//	_sb.append("\ttrg:");
+		//	_sb.append(std::to_string(targetPositionRotations));
+		//}
 		/* print every ten loops, printing too much too fast is generally bad for performance */
-		if (++_loops >= 10) {
-			_loops = 0;
-			printf("%s\n", _sb.c_str());
-		}
-		_sb.clear();
+		//if (++_loops >= 10) {
+		//	_loops = 0;
+		//	printf("%s\n", _sb.c_str());
+		//}
+		//_sb.clear();
 		/* save button state for on press detect */
-		_lastButton1 = button1;
+		//_lastButton1 = button1;
   
 
 
   //start PID control
   //hi scarlette this is for the driver station thing 
-   double p = frc::SmartDashboard::GetNumber("P Gain", 0);
-   double i = frc::SmartDashboard::GetNumber("I Gain", 0);
-   double d = frc::SmartDashboard::GetNumber("D Gain",0);
-   double iz = frc::SmartDashboard::GetNumber("I Zone", 0);
-   double ff = frc::SmartDashboard::GetNumber("Feed Forward", 0);
-   double max = frc::SmartDashboard::GetNumber("Max Output", 0);
-   double min = frc::SmartDashboard::GetNumber("Min Output", 0);
-   double rotations = frc::SmartDashboard::GetNumber("Set Rotations", 0);
+ //  double p = frc::SmartDashboard::GetNumber("P Gain", 0);
+//   double i = frc::SmartDashboard::GetNumber("I Gain", 0);
+ //  double d = frc::SmartDashboard::GetNumber("D Gain",0);
+ //  double iz = frc::SmartDashboard::GetNumber("I Zone", 0);
+ //  double ff = frc::SmartDashboard::GetNumber("Feed Forward", 0);
+ //  double max = frc::SmartDashboard::GetNumber("Max Output", 0);
+  // double min = frc::SmartDashboard::GetNumber("Min Output", 0);
+  // double rotations = frc::SmartDashboard::GetNumber("Set Rotations", 0);
 
-    if((p != kP)) { m_pidController.SetP(p); kP = p; }
-    if((i != kI)) { m_pidController.SetI(i); kI = i; }
-    if((d != kD)) { m_pidController.SetD(d); kD = d; }
-    if((iz != kIz)) { m_pidController.SetIZone(iz); kIz = iz; }
-    if((ff != kFF)) { m_pidController.SetFF(ff); kFF = ff; }
-    if((max != kMaxOutput) || (min != kMinOutput)) { }
-      m_pidController.SetOutputRange(min, max);
-      kMinOutput = min; kMaxOutput = max;
-  m_pidController.SetReference(rotations, rev::CANSparkMax::ControlType::kPosition);
+   // if((p != kP)) { m_pidController.SetP(p); kP = p; }
+  //  if((i != kI)) { m_pidController.SetI(i); kI = i; }
+  //  if((d != kD)) { m_pidController.SetD(d); kD = d; }
+  //  if((iz != kIz)) { m_pidController.SetIZone(iz); kIz = iz; }
+   // if((ff != kFF)) { m_pidController.SetFF(ff); kFF = ff; }
+  //  if((max != kMaxOutput) || (min != kMinOutput)) { }
+   //   m_pidController.SetOutputRange(min, max);
+   //   kMinOutput = min; kMaxOutput = max;
+ // m_pidController.SetReference(rotations, rev::CANSparkMax::ControlType::kPosition);
   //end PID control
 
   //start spark max limit switch/arm rotation limit switch
-    forwardLimit.EnableLimitSwitch(frc::SmartDashboard::GetBoolean("Forward Limit Enabled", false));
-    reverseLimit.EnableLimitSwitch(frc::SmartDashboard::GetBoolean("Reverse Limit Enabled", false));
+   // forwardLimit.EnableLimitSwitch(frc::SmartDashboard::GetBoolean("Forward Limit Enabled", false));
+  //  reverseLimit.EnableLimitSwitch(frc::SmartDashboard::GetBoolean("Reverse Limit Enabled", false));
     
-    frc::SmartDashboard::PutNumber("SetPoint", rotations);
-    frc::SmartDashboard::PutNumber("ProcessVariable", motor8encoder.GetPosition());
+   // frc::SmartDashboard::PutNumber("SetPoint", rotations);
+   // frc::SmartDashboard::PutNumber("ProcessVariable", motor8encoder.GetPosition());
 
-    frc::SmartDashboard::PutBoolean("Forward Limit Switch", forwardLimit.Get());
-    frc::SmartDashboard::PutBoolean("Reverse Limit Switch", forwardLimit.Get());
+  //  frc::SmartDashboard::PutBoolean("Forward Limit Switch", forwardLimit.Get());
+  //  frc::SmartDashboard::PutBoolean("Reverse Limit Switch", forwardLimit.Get());
     //end spark max limit switch
 
  //bool motionDetected = ahrs->IsMoving();  //More code from the only example of navx code I could find, I am going crazy rn
   //SmartDashboard::PutBoolean("MotionDetected", motionDetected);
 
-    frc::SmartDashboard::PutNumber("NavX Test", ahrs->GetAngle());
+   // frc::SmartDashboard::PutNumber("NavX Test", ahrs->GetAngle());
 
 
 };
 
- 
-};  
+  
 
     // Drive with arcade style
     //m_robotDrive.ArcadeDrive(StickY, StickX);
