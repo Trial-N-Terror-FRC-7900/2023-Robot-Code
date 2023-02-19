@@ -147,7 +147,7 @@ AHRS *ahrs;
     // result in both sides moving forward. Depending on how your robot's
     // gearbox is constructed, you might have to invert the left side instead.
 
-    //m_rightMotor.SetInverted(true);
+    rightLeadmotor.SetInverted(true);
 
     //PID start
    // m_pidController.SetP(kP);
