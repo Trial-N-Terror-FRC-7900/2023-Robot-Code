@@ -148,7 +148,7 @@ AHRS *ahrs;
     // result in both sides moving forward. Depending on how your robot's
     // gearbox is constructed, you might have to invert the left side instead.
 
-    //m_rightMotor.SetInverted(true);
+    rightLeadmotor.SetInverted(true);
 
     //PID start
     m_pidController.SetP(kP);
@@ -284,6 +284,8 @@ AHRS *ahrs;
   leftEncoder.SetPositionConversionFactor(5.28309);
   rightEncoder.SetPosition(0); 
   leftEncoder.SetPosition(0);
+      (ahrs->IsCalibrating());
+  ahrs->Reset();
   //ahrs->Reset(); <-crashes the code?
 
  // drivedistance = (drivedistance * 12)/(6 * 3.141592635) * (34/18) * (62/12) * (42); 
@@ -301,14 +303,13 @@ AHRS *ahrs;
 
 switch(switchOne) {
 case 0:
-  if(rightEncoder.GetPosition() < drivedistance){ 
-
-        rightLeadmotor.Set(0.3);
-      }
-  if(leftEncoder.GetPosition() < drivedistance){
-
-        rightLeadmotor.Set(0.3);
-      }
+  frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
+          if(rightEncoder.GetPosition() < drivedistance){ 
+            m_robotDrive.ArcadeDrive(0.4, 0); 
+          }
+          else{
+            m_robotDrive.ArcadeDrive(0, 0); 
+          }
 case 1:
 -Deadband(ahrs->GetPitch()*3, 0.5);
 
@@ -317,30 +318,19 @@ case 1:
 
     };
 
-  if(SelectedAuto == 2){   //Auto balance
+  if(SelectedAuto == 2){   //drive different distance?
 
   switch(switchTwo) {
   case 0:
-    if(rightEncoder.GetPosition() < drivedistance2){ 
-
-          rightLeadmotor.Set(0.3);
-        }
-    if(leftEncoder.GetPosition() < drivedistance2){
-
-          rightLeadmotor.Set(0.3);
-        }
+  frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
+          if(rightEncoder.GetPosition() < drivedistance2){ 
+            m_robotDrive.ArcadeDrive(0.4, 0); 
+          }
+          else{
+            m_robotDrive.ArcadeDrive(0, 0); 
+          }
 case 1:
       -Deadband(ahrs->GetPitch()*3, 0.5);
-
-case 2:
-    if(rightEncoder.GetPosition() > drivedistance2){   
-
-        rightLeadmotor.Set(0);
-      }
-    if(leftEncoder.GetPosition() > drivedistance2){   
-
-        rightLeadmotor.Set(0);
-      }
 
 
 }
