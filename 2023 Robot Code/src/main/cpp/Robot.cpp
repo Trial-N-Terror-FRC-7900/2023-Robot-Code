@@ -115,6 +115,7 @@ double drivedistance3 = -12; //if we are in the far RIGHT of BLUE
 double drivedistance4 = 0.5; //pushing block/cone/whatever fowrard MAYBEEEEEEEEEEE
 double SelectedAuto = 0; //selected auto
 
+
 int switchOne = 0; //not completed? Needs work I believe.
 int switchTwo = 2;
 int switchThree = 3;
@@ -279,13 +280,16 @@ AHRS *ahrs;
   // Auto Area
   void AutonomousInit() override {
 
+  rightEncoder.SetPositionConversionFactor(5.28309);
+  leftEncoder.SetPositionConversionFactor(5.28309);
   rightEncoder.SetPosition(0); 
   leftEncoder.SetPosition(0);
-  ahrs->Reset();
+  //ahrs->Reset(); <-crashes the code?
 
-  drivedistance = (drivedistance * 12)/(6 * 3.141592635) * (34/18) * (62/12) * (42); //converting from ft to counts of the encoder
-  drivedistance2 = (drivedistance2 * 12)/(6 * 3.141592635) * (34/18) * (62/12) * (42); //converting from ft to counts of the encoder
-  drivedistance = (drivedistance3 * 12)/(6 * 3.141592635) * (34/18) * (62/12) * (42); 
+ // drivedistance = (drivedistance * 12)/(6 * 3.141592635) * (34/18) * (62/12) * (42); 
+ // drivedistance2 = (drivedistance2 * 12)/(6 * 3.141592635) * (34/18) * (62/12) * (42); 
+ // drivedistance = (drivedistance3 * 12)/(6 * 3.141592635) * (34/18) * (62/12) * (42); 
+
 
   SelectedAuto = frc::SmartDashboard::GetNumber("Selected Auto", 0);
 
@@ -293,7 +297,7 @@ AHRS *ahrs;
 
   void AutonomousPeriodic() override {
    
-    if(SelectedAuto == 1){  //just driving backwards
+    if(SelectedAuto == 1){  //just driving backwards, with autobalance?
 
 switch(switchOne) {
 case 0:
@@ -417,7 +421,7 @@ case 2:
     //double StickX = Deadband(-m_stick.GetX(), 0.05, 2);
     //double StickY = Deadband(-m_stick.GetY(), 0.05, 2);
 
-  m_robotDrive.ArcadeDrive(Deadband(-m_stickDrive.GetY(), 0.05, 2), Deadband(m_stickDrive.GetZ(), 0.05)); 
+  m_robotDrive.ArcadeDrive(Deadband(-m_stickDrive.GetY(), 0.05, 2), 0.5*Deadband(-m_stickDrive.GetZ(), 0.05, 2)); 
 
      double xAxisRate = m_stickDrive.GetX();   //Balancing code?
      double yAxisRate = m_stickDrive.GetY();
