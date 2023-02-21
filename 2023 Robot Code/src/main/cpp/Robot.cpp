@@ -109,8 +109,8 @@ rev::SparkMaxRelativeEncoder rightEncoder = rightLeadmotor.GetEncoder(rev::Spark
 rev::SparkMaxRelativeEncoder leftEncoder = leftLeadmotor.GetEncoder(rev::SparkMaxRelativeEncoder::Type::kHallSensor, 42);
 
 
-double drivedistance = 6;
-double drivedistance2 = 7;
+double drivedistance = 6.3662; //120 inches i beleive
+double drivedistance2 = 3.81972; //72 inches
 double drivedistance3 = -12; //if we are in the far RIGHT of BLUE
 double drivedistance4 = 0.5; //pushing block/cone/whatever fowrard MAYBEEEEEEEEEEE
 double SelectedAuto = 0; //selected auto
@@ -299,7 +299,7 @@ AHRS *ahrs;
 
   void AutonomousPeriodic() override {
    
-    if(SelectedAuto == 1){  //just driving backwards, with autobalance?
+    if(SelectedAuto == 1){  //just driving 10ft, with autobalance?
 
 switch(switchOne) {
 case 0:
@@ -318,7 +318,7 @@ case 1:
 
     };
 
-  if(SelectedAuto == 2){   //drive different distance?
+  if(SelectedAuto == 2){   //drive different distance, about 6ft, to get onto platform?
 
   switch(switchTwo) {
   case 0:
