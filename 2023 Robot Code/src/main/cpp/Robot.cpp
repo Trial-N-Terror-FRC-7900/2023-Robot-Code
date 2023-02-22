@@ -311,7 +311,8 @@ case 0:
             m_robotDrive.ArcadeDrive(0, 0); 
           }
 case 1:
--Deadband(ahrs->GetPitch()*3, 0.5);
+ahrs->GetPitch();
+//-Deadband(ahrs->GetPitch()*3, 0.5);
 
 }
 
