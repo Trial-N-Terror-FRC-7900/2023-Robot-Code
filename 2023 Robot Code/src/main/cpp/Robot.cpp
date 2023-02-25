@@ -89,6 +89,10 @@ frc::DoubleSolenoid intakeN{15, frc::PneumaticsModuleType::REVPH, 4, 5};
 
 
 CANdle candle{15};
+void candlePurple(){
+        candle.SetLEDs(75,0,130);}
+void candleGreen(){
+        candle.SetLEDs(0, 119, 20);}
 //Animation(1, 0.5, 64, 0);
 
 double scale = 250, offset = -25;
@@ -108,8 +112,8 @@ int _loops = 0;
 bool _lastButton1 = false;
 
 frc::DifferentialDrive m_robotDrive{rightLeadmotor, leftLeadmotor};
-frc::Joystick m_stickDrive{0};
-frc::XboxController m_stickOperator{1};
+frc::Joystick m_stickDrive{1};
+frc::XboxController m_stickOperator{0};
 
 rev::SparkMaxPIDController m_pidController = armRotate.GetPIDController();
 rev::SparkMaxRelativeEncoder motor8encoder = armRotate2.GetEncoder(rev::SparkMaxRelativeEncoder::Type::kHallSensor, 42); //place holder for now to make sure the code was correct
@@ -244,8 +248,9 @@ AHRS *ahrs;
   config.brightnessScalar = 0.5; 
 
   candle.ConfigAllSettings(config);
+  
 
-     RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
+  RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
   candle.Animate(*rainbowAnim);
 
   //candle.SetLEDs(225, 225, 225);
@@ -318,13 +323,13 @@ AHRS *ahrs;
 
   SelectedAuto = frc::SmartDashboard::GetNumber("Selected Auto", 0);
 
-  RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
-  candle.Animate(*rainbowAnim);
+  //RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
+  //candle.Animate(*rainbowAnim);
   }
 
   void AutonomousPeriodic() override {
-   RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
-  candle.Animate(*rainbowAnim);
+ //  RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
+ // candle.Animate(*rainbowAnim);
     if(SelectedAuto == 1){  //just driving 10ft, with autobalance?
 
 switch(switchOne) {
@@ -339,8 +344,7 @@ case 0:
 case 1:
 ahrs->GetPitch();
 //-Deadband(ahrs->GetPitch()*3, 0.5);
-RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
-  candle.Animate(*rainbowAnim);
+
 
 }
 
@@ -494,18 +498,19 @@ case 1:
     intakemotorR.Set(0);
    }
 
+
   //pnuematics for INTAKEEEEEE
 intakeS.Set(frc::DoubleSolenoid::Value::kReverse);
     if (m_stickOperator.GetXButtonPressed()) {
    intakeS.Toggle();
 }
 
-
 intakeN.Set(frc::DoubleSolenoid::Value::kReverse);
     if (m_stickOperator.GetXButtonPressed()) {
    intakeN.Toggle();
 }
 //end pnuematics, when pressed it will either go up or go down, depending on current orientation 
+
 
   if (m_stickOperator.GetLeftBumperPressed()){
    handF.Set(0.5); // When pressed the intake turns on
@@ -523,13 +528,32 @@ intakeN.Set(frc::DoubleSolenoid::Value::kReverse);
     handR.Set(0);
    }
 
-   if(m_stickOperator.GetBackButtonPressed()){
-      candle.SetLEDs(106, 65, 187);
+
+
+   if(m_stickOperator.GetYButtonPressed()){
+      candlePurple();
+      candle.ClearAnimation(0);
+      frc::SmartDashboard::PutNumber("candle", 1);
+      }
+   if(m_stickOperator.GetYButtonReleased()){
+    candle.SetLEDs(255, 255, 255);
+     // RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
+     //   candle.Animate(*rainbowAnim);
+        frc::SmartDashboard::PutNumber("candle", 2);
       }
    
-   if(m_stickOperator.GetStartButtonPressed()){
-      candle.SetLEDs(0, 119, 55);
+   if(m_stickOperator.GetAButtonPressed()){
+      candleGreen();
+      candle.ClearAnimation(0);
+      frc::SmartDashboard::PutNumber("candle", 3);
       }
+   if(m_stickOperator.GetAButtonReleased()){
+    candle.SetLEDs(255, 255, 255);
+    // RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
+     //   candle.Animate(*rainbowAnim);
+        frc::SmartDashboard::PutNumber("candle", 4);
+      }
+
 
 
    /* get gamepad axis */
