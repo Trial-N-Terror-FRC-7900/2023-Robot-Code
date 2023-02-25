@@ -89,10 +89,10 @@ frc::DoubleSolenoid intakeN{15, frc::PneumaticsModuleType::REVPH, 4, 5};
 
 
 CANdle candle{15};
-void candlePurple(){
-        candle.SetLEDs(75,0,130);}
-void candleGreen(){
-        candle.SetLEDs(0, 119, 20);}
+//void candlePurple(){
+        //candle.SetLEDs(75,0,130);}
+//void candleGreen(){
+        //candle.SetLEDs(0, 119, 20);}
 //Animation(1, 0.5, 64, 0);
 
 double scale = 250, offset = -25;
@@ -112,8 +112,8 @@ int _loops = 0;
 bool _lastButton1 = false;
 
 frc::DifferentialDrive m_robotDrive{rightLeadmotor, leftLeadmotor};
-frc::Joystick m_stickDrive{1};
-frc::XboxController m_stickOperator{0};
+frc::Joystick m_stickDrive{0};
+frc::XboxController m_stickOperator{1};
 
 rev::SparkMaxPIDController m_pidController = armRotate.GetPIDController();
 rev::SparkMaxRelativeEncoder motor8encoder = armRotate2.GetEncoder(rev::SparkMaxRelativeEncoder::Type::kHallSensor, 42); //place holder for now to make sure the code was correct
@@ -250,8 +250,8 @@ AHRS *ahrs;
   candle.ConfigAllSettings(config);
   
 
-  RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
-  candle.Animate(*rainbowAnim);
+  //RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
+  //candle.Animate(*rainbowAnim);
 
   //candle.SetLEDs(225, 225, 225);
   //virtual  Animation(1, 0.5, 64);
@@ -530,29 +530,25 @@ intakeN.Set(frc::DoubleSolenoid::Value::kReverse);
 
 
 
-   if(m_stickOperator.GetYButtonPressed()){
-      candlePurple();
+   if(m_stickDrive.GetRawButton(7)){
       candle.ClearAnimation(0);
-      frc::SmartDashboard::PutNumber("candle", 1);
       }
-   if(m_stickOperator.GetYButtonReleased()){
-    candle.SetLEDs(255, 255, 255);
-     // RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
-     //   candle.Animate(*rainbowAnim);
+   if(m_stickDrive.GetRawButtonPressed(8)){
+      RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
+        candle.Animate(*rainbowAnim);
         frc::SmartDashboard::PutNumber("candle", 2);
       }
-   
-   if(m_stickOperator.GetAButtonPressed()){
-      candleGreen();
-      candle.ClearAnimation(0);
-      frc::SmartDashboard::PutNumber("candle", 3);
-      }
-   if(m_stickOperator.GetAButtonReleased()){
-    candle.SetLEDs(255, 255, 255);
-    // RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
-     //   candle.Animate(*rainbowAnim);
-        frc::SmartDashboard::PutNumber("candle", 4);
-      }
+
+   if(m_stickDrive.GetRawButton(9)){
+    candle.SetLEDs(0, 119, 20);
+   }
+
+   if(m_stickDrive.GetRawButton(10)){
+    candle.SetLEDs(75,0,130);
+   }
+   if(m_stickDrive.GetRawButton(11)){
+    candle.SetLEDs(255,255,0);
+   }
 
 
 
