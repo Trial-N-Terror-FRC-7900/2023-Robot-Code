@@ -18,6 +18,15 @@
 #include <frc/DoubleSolenoid.h>
 #include <iostream>
 
+#include "ctre/phoenix/led/ColorFlowAnimation.h"
+#include "ctre/phoenix/led/FireAnimation.h"
+#include "ctre/phoenix/led/LarsonAnimation.h"
+#include "ctre/phoenix/led/RainbowAnimation.h"
+#include "ctre/phoenix/led/RgbFadeAnimation.h"
+#include "ctre/phoenix/led/SingleFadeAnimation.h"
+#include "ctre/phoenix/led/StrobeAnimation.h"
+#include "ctre/phoenix/led/TwinkleAnimation.h"
+#include "ctre/phoenix/led/TwinkleOffAnimation.h"
 
 
 // Returns a 1 for posghtive numbers and a -1 for negative numbers
@@ -79,6 +88,9 @@ frc::DoubleSolenoid intakeS{15, frc::PneumaticsModuleType::REVPH, 2, 3};
 frc::DoubleSolenoid intakeN{15, frc::PneumaticsModuleType::REVPH, 4, 5};
 
 
+CANdle candle{15};
+//Animation(1, 0.5, 64, 0);
+
 double scale = 250, offset = -25;
 //frc::AnalogPotentiometer pressureTransducer{1, scale, offset};
 
@@ -130,11 +142,7 @@ AHRS *ahrs;
   double kP = 0.1, kI = 1e-4, kD = 1, kIz = 0, kFF = 0, kMaxOutput = 1, kMinOutput = -1;
 
   //static const double kOffBalanceThresholdDegrees = 10.0f;  //More navx stuff, it's all red so have fun with that
-//static const double kOnBalanceThresholdDegrees = 5.0f;
-
-//using namespace std;
-    
-
+//static const double kOnBalanceThresholdDegrees = 5.0f
 
 
  public: 
@@ -229,7 +237,22 @@ AHRS *ahrs;
 		armExtend.Config_kI(kPIDLoopIdx, 0.0, kTimeoutMs);
 		armExtend.Config_kD(kPIDLoopIdx, 0.0, kTimeoutMs);
 
-    // product-specific voltage->pressure conversion, see product manual
+    CANdleConfiguration config;
+
+  config.stripType = LEDStripType::RGB;
+
+  config.brightnessScalar = 0.5; 
+
+  candle.ConfigAllSettings(config);
+
+     RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
+  candle.Animate(*rainbowAnim);
+
+  //candle.SetLEDs(225, 225, 225);
+  //virtual  Animation(1, 0.5, 64);
+
+
+// product-specific voltage->pressure conversion, see product manual
 // in this case, 250(V/5)-25
 // the scale parameter in the AnalogPotentiometer constructor is scaled from 1 instead of 5,
 // so if r is the raw AnalogPotentiometer output, the pressure is 250r-25
@@ -295,10 +318,13 @@ AHRS *ahrs;
 
   SelectedAuto = frc::SmartDashboard::GetNumber("Selected Auto", 0);
 
+  RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
+  candle.Animate(*rainbowAnim);
   }
 
   void AutonomousPeriodic() override {
-   
+   RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
+  candle.Animate(*rainbowAnim);
     if(SelectedAuto == 1){  //just driving 10ft, with autobalance?
 
 switch(switchOne) {
@@ -313,6 +339,8 @@ case 0:
 case 1:
 ahrs->GetPitch();
 //-Deadband(ahrs->GetPitch()*3, 0.5);
+RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
+  candle.Animate(*rainbowAnim);
 
 }
 
@@ -494,6 +522,15 @@ intakeN.Set(frc::DoubleSolenoid::Value::kReverse);
    if(m_stickOperator.GetLeftBumperReleased()){
     handR.Set(0);
    }
+
+   if(m_stickOperator.GetBackButtonPressed()){
+      candle.SetLEDs(106, 65, 187);
+      }
+   
+   if(m_stickOperator.GetStartButtonPressed()){
+      candle.SetLEDs(0, 119, 55);
+      }
+
 
    /* get gamepad axis */
 		double leftYstick = m_stickOperator.GetYButtonPressed();
