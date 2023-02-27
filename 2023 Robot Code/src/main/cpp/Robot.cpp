@@ -452,9 +452,7 @@ AHRS *ahrs;
 
   void TeleopPeriodic() override {
     //double StickX = Deadband(-m_stick.GetX(), 0.05, 2);
-    //double StickY = Deadband(-m_stick.GetY(), 0.05, 2);
-
-  m_robotDrive.ArcadeDrive(Deadband(-m_stickDrive.GetY(), 0.05, 2), 0.5*Deadband(-m_stickDrive.GetZ(), 0.05, 2)); 
+    //double StickY = Deadband(-m_stick.GetY(), 0.05, 2); 
 
      double xAxisRate = m_stickDrive.GetX();   //Balancing code?
      double yAxisRate = m_stickDrive.GetY();
@@ -508,6 +506,14 @@ AHRS *ahrs;
     intakemotorR.Set(0);
    }
 
+   if(m_stickDrive.GetRawButton(0)){
+    m_robotDrive.ArcadeDrive(0.2*(Deadband(-m_stickDrive.GetY(), 0.05, 2)), 0.5*Deadband(-m_stickDrive.GetZ(), 0.05, 2));
+
+   }
+   else{
+    m_robotDrive.ArcadeDrive(Deadband(-m_stickDrive.GetY(), 0.05, 2), 0.5*Deadband(-m_stickDrive.GetZ(), 0.05, 2)); 
+
+    }
 
   //pnuematics for INTAKEEEEEE
 intakeS.Set(frc::DoubleSolenoid::Value::kReverse);
