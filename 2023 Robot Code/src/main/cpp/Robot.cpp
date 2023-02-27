@@ -132,9 +132,7 @@ double drivedistance4 = 0.5; //pushing block/cone/whatever fowrard MAYBEEEEEEEEE
 double SelectedAuto = 0; //selected auto
 
 
-int switchOne = 0; //not completed? Needs work I believe.
-int switchTwo = 2;
-int switchThree = 3;
+int autoStep = 0;
 
 AHRS *ahrs;
 
@@ -330,41 +328,53 @@ AHRS *ahrs;
   void AutonomousPeriodic() override {
  //  RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
  // candle.Animate(*rainbowAnim);
-    if(SelectedAuto == 1){  //just driving 10ft, with autobalance?
+  if(SelectedAuto == 1){  //just driving 10ft, with autobalance?
 
-switch(switchOne) {
-case 0:
-  frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
-          if(rightEncoder.GetPosition() < drivedistance){ 
-            m_robotDrive.ArcadeDrive(0.4, 0); 
-          }
-          else{
-            m_robotDrive.ArcadeDrive(0, 0); 
-          }
-case 1:
-ahrs->GetPitch();
-//-Deadband(ahrs->GetPitch()*3, 0.5);
+    frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
+    if(rightEncoder.GetPosition() < drivedistance){ 
+      m_robotDrive.ArcadeDrive(0.4, 0); 
+    }
+    else{
+      m_robotDrive.ArcadeDrive(0, 0); 
+    }
 
 
-}
 
 
-    };
+  }
 
   if(SelectedAuto == 2){   //drive different distance, about 6ft, to get onto platform?
 
-  switch(switchTwo) {
-  case 0:
-  frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
-          if(rightEncoder.GetPosition() < drivedistance2){ 
-            m_robotDrive.ArcadeDrive(0.4, 0); 
-          }
-          else{
-            m_robotDrive.ArcadeDrive(0, 0); 
-          }
-case 1:
-      -Deadband(ahrs->GetPitch()*3, 0.5);
+  switch(autoStep) {
+    case 0:
+     frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
+     if(rightEncoder.GetPosition() < 10){ 
+      m_robotDrive.ArcadeDrive(0.8, 0); 
+     }
+     else{
+      m_robotDrive.ArcadeDrive(0, 0); 
+      autoStep = 1;
+      rightEncoder.SetPosition(0); 
+      leftEncoder.SetPosition(0);
+     }
+    case 1:
+     frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
+     if(rightEncoder.GetPosition() > -5){ 
+      m_robotDrive.ArcadeDrive(-0.8, 0); 
+     }
+     else{
+      m_robotDrive.ArcadeDrive(0, 0); 
+      autoStep = 2;
+      rightEncoder.SetPosition(0); 
+      leftEncoder.SetPosition(0);
+     }
+    case 2:
+     if(fabs(rightEncoder.GetPosition()) < 2){
+      m_robotDrive.ArcadeDrive(0.005*(-Deadband(ahrs->GetPitch(), 5)), 0);
 
+     }
+
+     
 
 }
 
