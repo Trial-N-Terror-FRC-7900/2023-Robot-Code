@@ -490,23 +490,23 @@ AHRS *ahrs;
       }
 
   
-  if (m_stickOperator.GetRightBumperPressed()){
-   intakemotorF.Set(0.5); // When pressed the intake turns on
-  }
+ // if (m_stickOperator.GetRightBumperPressed()){
+  // intakemotorF.Set(0.5); // When pressed the intake turns on
+  //}
 
-   if (m_stickOperator.GetRightBumperReleased()) {
-   intakemotorF.Set(0); 
-   } // When released the intake turns off
+ //  if (m_stickOperator.GetRightBumperReleased()) {
+  // intakemotorF.Set(0); 
+  // } // When released the intake turns off
 
-   if(m_stickOperator.GetRightBumperPressed()){
-    intakemotorR.Set(-0.5);
-   }
+  // if(m_stickOperator.GetRightBumperPressed()){
+  //  intakemotorR.Set(-0.5);
+ //  }
 
-   if(m_stickOperator.GetRightBumperReleased()){
-    intakemotorR.Set(0);
-   }
+ //  if(m_stickOperator.GetRightBumperReleased()){
+ //   intakemotorR.Set(0);
+//   }
 
-   if(m_stickDrive.GetRawButton(0)){
+   if(m_stickDrive.GetRawButton(1)){
     m_robotDrive.ArcadeDrive(0.2*(Deadband(-m_stickDrive.GetY(), 0.05, 2)), 0.5*Deadband(-m_stickDrive.GetZ(), 0.05, 2));
 
    }
@@ -580,7 +580,7 @@ AHRS *ahrs;
     if (m_stickOperator.GetXButtonPressed()) {
 		armExtend.Set(ControlMode::Position, 4500); 
 		}
-    
+
     if (m_stickOperator.GetAButtonPressed()) {
 		armExtend.Set(ControlMode::Position, 4000); 
 		}
