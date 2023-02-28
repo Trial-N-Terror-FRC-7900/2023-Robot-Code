@@ -102,7 +102,9 @@ WPI_VictorSPX intakemotorF{9};
 WPI_VictorSPX intakemotorR{10}; 
 WPI_VictorSPX handF{13};
 WPI_VictorSPX handR{14}; 
-WPI_TalonSRX armExtend{6};
+WPI_TalonFX armExtend{6};
+
+
 
 std::string _sb;
 int kPIDLoopIdx;
@@ -215,11 +217,9 @@ AHRS *ahrs;
 		 * Grab the 360 degree position of the MagEncoder's absolute
 		 * position, and intitally set the relative sensor to match.
 		 */
-		int absolutePosition = armExtend.GetSensorCollection().GetPulseWidthPosition();
+		int absolutePosition = armExtend.GetSensorCollection().GetIntegratedSensorAbsolutePosition();
 		/* use the low level API to set the quad encoder signal */
-		armExtend.SetSelectedSensorPosition(absolutePosition, kPIDLoopIdx,
-				kTimeoutMs);
-     //armExtend.SetSelectedSensorPosition(absolutePosition, int pidIdx = 1, int timeoutMs = 50); ?
+		armExtend.SetSelectedSensorPosition(absolutePosition, kPIDLoopIdx, kTimeoutMs);
 
 		/* choose the sensor and sensor direction */
 		armExtend.ConfigSelectedFeedbackSensor(
@@ -516,15 +516,15 @@ AHRS *ahrs;
     }
 
   //pnuematics for INTAKEEEEEE
-intakeS.Set(frc::DoubleSolenoid::Value::kReverse);
-    if (m_stickOperator.GetXButtonPressed()) {
-   intakeS.Toggle();
-}
+//intakeS.Set(frc::DoubleSolenoid::Value::kReverse);
+ //   if (m_stickOperator.GetXButtonPressed()) {
+ //  intakeS.Toggle();
+//}
 
-intakeN.Set(frc::DoubleSolenoid::Value::kReverse);
-    if (m_stickOperator.GetXButtonPressed()) {
-   intakeN.Toggle();
-}
+//intakeN.Set(frc::DoubleSolenoid::Value::kReverse);
+//    if (m_stickOperator.GetXButtonPressed()) {
+//   intakeN.Toggle();
+//}
 //end pnuematics, when pressed it will either go up or go down, depending on current orientation 
 
 
@@ -568,43 +568,28 @@ intakeN.Set(frc::DoubleSolenoid::Value::kReverse);
 
 
 
-   /* get gamepad axis */
 		double leftYstick = m_stickOperator.GetYButtonPressed();
 		double motorOutput = armExtend.GetMotorOutputPercent();
-		bool button1 = m_stickOperator.GetRawButton(1);
-		bool button2 = m_stickOperator.GetRawButton(2);
-		/* prepare line to print */
-		_sb.append("\tout:");
-		_sb.append(std::to_string(motorOutput));
-		_sb.append("\tpos:");
-		_sb.append(std::to_string(armExtend.GetSelectedSensorPosition(kPIDLoopIdx)));
-		/* on button1 press enter closed-loop mode on target position */
-		if (!_lastButton1 && button1) {
-			/* Position mode - button just pressed */
-			targetPositionRotations = leftYstick * 10.0 * 4096; /* 10 Rotations in either direction */
-			armExtend.Set(ControlMode::Position, targetPositionRotations); /* 10 rotations in either direction */
+		bool button2 = m_stickOperator.GetRightBumperPressed();
+	
+		//press button and ot'll go where you want it to go
+		if (m_stickOperator.GetYButtonPressed()) {
+			armExtend.Set(ControlMode::Position, 5000); 
 		}
-		/* on button2 just straight drive */
-		if (button2) {
-			/* Percent voltage mode */
-			armExtend.Set(ControlMode::PercentOutput, leftYstick);
+
+    if (m_stickOperator.GetXButtonPressed()) {
+		armExtend.Set(ControlMode::Position, 4500); 
 		}
-		/* if Talon is in position closed-loop, print some more info */
-		if (armExtend.GetControlMode() == ControlMode::Position) {
-			/* append more signals to print when in speed mode. */
-			_sb.append("\terrNative:");
-			_sb.append(std::to_string(armExtend.GetClosedLoopError(kPIDLoopIdx)));
-			_sb.append("\ttrg:");
-			_sb.append(std::to_string(targetPositionRotations));
+    
+    if (m_stickOperator.GetAButtonPressed()) {
+		armExtend.Set(ControlMode::Position, 4000); 
 		}
-		/* print every ten loops, printing too much too fast is generally bad for performance */
-		if (++_loops >= 10) {
-			_loops = 0;
-			printf("%s\n", _sb.c_str());
+		//override, add deadband for xbox controller 
+		if (m_stickOperator.GetRightBumperPressed()) {
+			armExtend.Set(ControlMode::PercentOutput, Deadband(leftYstick, 0.01));
 		}
-		_sb.clear();
-		/* save button state for on press detect */
-		_lastButton1 = button1;
+
+
   
 
 
@@ -624,15 +609,12 @@ intakeN.Set(frc::DoubleSolenoid::Value::kReverse);
     if((d != kD)) { m_pidController.SetD(d); kD = d; }
     if((iz != kIz)) { m_pidController.SetIZone(iz); kIz = iz; }
     if((ff != kFF)) { m_pidController.SetFF(ff); kFF = ff; }
-    if((max != kMaxOutput) || (min != kMinOutput)) { }
+    if((max != kMaxOutput) || (min != kMinOutput)) { 
       m_pidController.SetOutputRange(min, max);
+    }
       kMinOutput = min; kMaxOutput = max;
-  m_pidController.SetReference(rotations, rev::CANSparkMax::ControlType::kPosition);
+    m_pidController.SetReference(rotations, rev::CANSparkMax::ControlType::kPosition);
   //end PID control
-
-  //start spark max limit switch/arm rotation limit switch
-    forwardLimit.EnableLimitSwitch(frc::SmartDashboard::GetBoolean("Forward Limit Enabled", false));
-    reverseLimit.EnableLimitSwitch(frc::SmartDashboard::GetBoolean("Reverse Limit Enabled", false));
     
     frc::SmartDashboard::PutNumber("SetPoint", rotations);
     frc::SmartDashboard::PutNumber("ProcessVariable", motor8encoder.GetPosition());
