@@ -17,6 +17,7 @@
 #include <units/pressure.h>
 #include <frc/DoubleSolenoid.h>
 #include <iostream>
+#include <frc/Timer.h>
 
 #include "ctre/phoenix/led/ColorFlowAnimation.h"
 #include "ctre/phoenix/led/FireAnimation.h"
@@ -104,6 +105,7 @@ WPI_VictorSPX handF{13};
 WPI_VictorSPX handR{14}; 
 WPI_TalonFX armExtend{6};
 
+frc::Timer timer;
 
 
 std::string _sb;
@@ -127,8 +129,8 @@ rev::SparkMaxRelativeEncoder rightEncoder = rightLeadmotor.GetEncoder(rev::Spark
 rev::SparkMaxRelativeEncoder leftEncoder = leftLeadmotor.GetEncoder(rev::SparkMaxRelativeEncoder::Type::kHallSensor, 42);
 
 
-double drivedistance = 6.3662; //120 inches i beleive
-double drivedistance2 = 3.81972; //72 inches
+double drivedistance = 10; //120 inches i beleive
+double drivedistance2 = 6; //72 inches
 double drivedistance3 = -12; //if we are in the far RIGHT of BLUE
 double drivedistance4 = 0.5; //pushing block/cone/whatever fowrard MAYBEEEEEEEEEEE
 double SelectedAuto = 0; //selected auto
@@ -161,6 +163,7 @@ AHRS *ahrs;
     // gearbox is constructed, you might have to invert the left side instead.
 
     rightLeadmotor.SetInverted(true);
+    
 
     //PID start
     m_pidController.SetP(kP);
@@ -295,24 +298,23 @@ AHRS *ahrs;
 
 
 
-
    // ahrs = new AHRS(SPI::Port::kMXP);  //I have no clue what any of this does, it was the only example code I could find. 
     //AHRS *ahrs; 
 
 
   };
 
-
   // Auto Area
   void AutonomousInit() override {
 
-  rightEncoder.SetPositionConversionFactor(5.28309);
-  leftEncoder.SetPositionConversionFactor(5.28309);
-  rightEncoder.SetPosition(0); 
+  autoStep = 0;
+  rightEncoder.SetPositionConversionFactor(0.16095446232);
+  leftEncoder.SetPositionConversionFactor(0.16095446232);
+  rightEncoder.SetPosition(0);
   leftEncoder.SetPosition(0);
-      (ahrs->IsCalibrating());
   ahrs->Reset();
   //ahrs->Reset(); <-crashes the code?
+
 
  // drivedistance = (drivedistance * 12)/(6 * 3.141592635) * (34/18) * (62/12) * (42); 
  // drivedistance2 = (drivedistance2 * 12)/(6 * 3.141592635) * (34/18) * (62/12) * (42); 
@@ -320,128 +322,95 @@ AHRS *ahrs;
 
 
   SelectedAuto = frc::SmartDashboard::GetNumber("Selected Auto", 0);
-
+if(SelectedAuto == 0){
+  rightLeadmotor.SetIdleMode(rev::CANSparkMax::IdleMode::kCoast);
+  rightFollowmotor.SetIdleMode(rev::CANSparkMax::IdleMode::kCoast);
+  leftLeadmotor.SetIdleMode(rev::CANSparkMax::IdleMode::kCoast);
+  leftFollowmotor.SetIdleMode(rev::CANSparkMax::IdleMode::kCoast);
+}
+else{
+  rightLeadmotor.SetIdleMode(rev::CANSparkMax::IdleMode::kBrake);
+  rightFollowmotor.SetIdleMode(rev::CANSparkMax::IdleMode::kBrake);
+  leftLeadmotor.SetIdleMode(rev::CANSparkMax::IdleMode::kBrake);
+  leftFollowmotor.SetIdleMode(rev::CANSparkMax::IdleMode::kBrake);
+}
   //RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
   //candle.Animate(*rainbowAnim);
   }
 
-  void AutonomousPeriodic() override {
+void AutonomousPeriodic() override {
  //  RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
  // candle.Animate(*rainbowAnim);
+
   if(SelectedAuto == 1){  //just driving 10ft, with autobalance?
 
     frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
-    if(rightEncoder.GetPosition() < drivedistance){ 
+    if(rightEncoder.GetPosition() < 10.0){ 
       m_robotDrive.ArcadeDrive(0.4, 0); 
     }
     else{
       m_robotDrive.ArcadeDrive(0, 0); 
     }
 
-
-
-
   }
 
   if(SelectedAuto == 2){   //drive different distance, about 6ft, to get onto platform?
+    frc::SmartDashboard::PutNumber("auto step", autoStep);
+    if(autoStep == 0){
+        frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
+        frc::SmartDashboard::PutString("AutoPart", "Part1");
+        if(rightEncoder.GetPosition() < 18.0){ 
+          m_robotDrive.ArcadeDrive(0.6, 0); 
+        }
+        else{
+          frc::SmartDashboard::PutString("AutoPart", "Part2");
+          m_robotDrive.ArcadeDrive(0, 0); 
+          autoStep = 1;
+          rightEncoder.SetPosition(0); 
+          leftEncoder.SetPosition(0);
+          timer.Start();
 
-  switch(autoStep) {
-    case 0:
-     frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
-     if(rightEncoder.GetPosition() < 10){ 
-      m_robotDrive.ArcadeDrive(0.8, 0); 
-     }
-     else{
-      m_robotDrive.ArcadeDrive(0, 0); 
-      autoStep = 1;
-      rightEncoder.SetPosition(0); 
-      leftEncoder.SetPosition(0);
-     }
-    case 1:
-     frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
-     if(rightEncoder.GetPosition() > -5){ 
-      m_robotDrive.ArcadeDrive(-0.8, 0); 
-     }
-     else{
-      m_robotDrive.ArcadeDrive(0, 0); 
-      autoStep = 2;
-      rightEncoder.SetPosition(0); 
-      leftEncoder.SetPosition(0);
-     }
-    case 2:
-     if(fabs(rightEncoder.GetPosition()) < 2){
-      m_robotDrive.ArcadeDrive(0.005*(-Deadband(ahrs->GetPitch(), 5)), 0);
+        }
+    }
 
-     }
-
-     
-
-}
-
-
-     // try {
-     // Use the joystick X axis for lateral movement, Y axis for forward movement, and Z axis for rotation.
-    //   m_robotDrive.DriveCartesian(xAxisRate, yAxisRate, m_stickDrive.GetZ());
-    //  } 
-    //  catch (exception& ex ) {
-    //   string err_string = "Drive system error:  ";
-    //   err_string += ex.what();
-    //   DriverStation::ReportError(err_string.c_str());
-    //  }
-     // Wait(0.005); // wait 5ms to avoid hogging CPU cycle
-
-  };
-
-    if(SelectedAuto == 3){  //FAR RIGHT BLUE w/ block on ground level????? idk if it'll work but i tried, i need a thing thats like do this and then this.
-
-      if(rightEncoder.GetPosition() < drivedistance3){
-
-        rightLeadmotor.Set(0.3);
-      
+    if(autoStep == 1){
+      if (timer.Get() < 2_s)
+      {
+       m_robotDrive.ArcadeDrive(0, 0);
       }
       else{
-
-        
-        rightLeadmotor.Set(0);
-      
+        timer.Stop();
+        autoStep = 2;
       }
-
-       if(leftEncoder.GetPosition() < drivedistance3){
-
-        leftLeadmotor.Set(0.3);
-      
-      }
-      else{
-
-        
-        leftLeadmotor.Set(0);
-      
-      }
-
-      if(rightEncoder.GetPosition() < drivedistance4){ 
-
-        rightLeadmotor.Set(0.3);
-      }
-
-      else{
-
-        rightLeadmotor.Set(0); 
-
-      }
-
-      if(leftEncoder.GetPosition() < drivedistance4){
-
-        leftLeadmotor.Set(0.3);
-      }
-
-     else{
-
-      leftLeadmotor.Set(0);
 
     }
 
-}
+    if(autoStep == 2){
+      frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
+      if(rightEncoder.GetPosition() > -8.5){ 
+        m_robotDrive.ArcadeDrive(-0.6, 0); 
+      }
+      else{
+        m_robotDrive.ArcadeDrive(0, 0); 
+        autoStep = 3;
+        rightEncoder.SetPosition(0); 
+        leftEncoder.SetPosition(0);
+      }
+    }
+    if(autoStep == 3){
+          frc::SmartDashboard::PutNumber("Robot Pitch", ahrs->GetRoll());
+      //if(fabs(rightEncoder.GetPosition()) < 2.0){
+        m_robotDrive.ArcadeDrive(-0.025*(ahrs->GetRoll()), 0);
+ // }
+    }
+  }
 
+  if(SelectedAuto == 4){
+          frc::SmartDashboard::PutNumber("Robot Pitch", ahrs->GetRoll());
+      //if(fabs(rightEncoder.GetPosition()) < 2.0){
+        m_robotDrive.ArcadeDrive(-0.025*(ahrs->GetRoll()), 0);
+ // }
+}
 }
   // Teleop Area
   void TeleopInit() override {
@@ -454,40 +423,26 @@ AHRS *ahrs;
     //double StickX = Deadband(-m_stick.GetX(), 0.05, 2);
     //double StickY = Deadband(-m_stick.GetY(), 0.05, 2); 
 
-     double xAxisRate = m_stickDrive.GetX();   //Balancing code?
-     double yAxisRate = m_stickDrive.GetY();
-     double pitchAngleDegrees = ahrs->GetPitch();
-     double rollAngleDegrees = ahrs->GetRoll();
+    //frc::SmartDashboard::PutNumber("Robot Pitch", ahrs->GetRoll());
+     if(m_stickDrive.GetRawButton(4)){ 
+   //  frc::SmartDashboard::PutNumber("Robot Pitch", ahrs->GetRoll());
+      m_robotDrive.ArcadeDrive(-0.025*(ahrs->GetRoll()), 0);
+    }
+    else{
 
-      if ( !autoBalanceXMode &&
-       (fabs(pitchAngleDegrees) >=
-       fabs(kOffBalanceThresholdDegrees))) {
-       autoBalanceXMode = true;
-      }
-      else if ( autoBalanceXMode &&
-        (fabs(pitchAngleDegrees) <=
-        fabs(kOnBalanceThresholdDegrees))) {
-        autoBalanceXMode = false;
-      }
-      if ( !autoBalanceYMode &&
-        (fabs(pitchAngleDegrees) >=
-        fabs(kOffBalanceThresholdDegrees))) {
-        autoBalanceYMode = true;
-      }
-      else if ( autoBalanceYMode &&
-        (fabs(pitchAngleDegrees) <=
-        fabs(kOnBalanceThresholdDegrees))) {
-        autoBalanceYMode = false;
-      }
+      if(m_stickDrive.GetRawButton(1)){
+       m_robotDrive.ArcadeDrive(0.2*(Deadband(-m_stickDrive.GetY(), 0.05, 2)), 0.5*Deadband(-m_stickDrive.GetZ(), 0.05, 2));
+    }
+   else{
+    m_robotDrive.ArcadeDrive(Deadband(-m_stickDrive.GetY(), 0.05, 2), 0.5*Deadband(-m_stickDrive.GetZ(), 0.05, 2)); 
+    }
+    }
 
-      if ( autoBalanceXMode ) {
-       double pitchAngleRadians = pitchAngleDegrees * (M_PI / 180.0);
-        xAxisRate = sin(pitchAngleRadians) * -1;
-      }
-      if ( autoBalanceYMode ) {
-       double rollAngleRadians = rollAngleDegrees * (M_PI / 180.0);
-       yAxisRate = sin(rollAngleRadians) * -1;
-      }
+    if(m_stickDrive.GetRawButton(3)){
+      ahrs->Reset();
+      ahrs->ZeroYaw();
+      ahrs->GetBoardYawAxis();
+    }
 
   
  // if (m_stickOperator.GetRightBumperPressed()){
@@ -506,14 +461,7 @@ AHRS *ahrs;
  //   intakemotorR.Set(0);
 //   }
 
-   if(m_stickDrive.GetRawButton(1)){
-    m_robotDrive.ArcadeDrive(0.2*(Deadband(-m_stickDrive.GetY(), 0.05, 2)), 0.5*Deadband(-m_stickDrive.GetZ(), 0.05, 2));
 
-   }
-   else{
-    m_robotDrive.ArcadeDrive(Deadband(-m_stickDrive.GetY(), 0.05, 2), 0.5*Deadband(-m_stickDrive.GetZ(), 0.05, 2)); 
-
-    }
 
   //pnuematics for INTAKEEEEEE
 //intakeS.Set(frc::DoubleSolenoid::Value::kReverse);
@@ -568,9 +516,7 @@ AHRS *ahrs;
 
 
 
-		double leftYstick = m_stickOperator.GetYButtonPressed();
-		double motorOutput = armExtend.GetMotorOutputPercent();
-		bool button2 = m_stickOperator.GetRightBumperPressed();
+		double leftYstick = m_stickOperator.GetLeftTriggerAxis();
 	
 		//press button and ot'll go where you want it to go
 		if (m_stickOperator.GetYButtonPressed()) {
@@ -626,10 +572,20 @@ AHRS *ahrs;
  //bool motionDetected = ahrs->IsMoving();  //More code from the only example of navx code I could find, I am going crazy rn
   //SmartDashboard::PutBoolean("MotionDetected", motionDetected);
 
-    frc::SmartDashboard::PutNumber("NavX Test", ahrs->GetAngle());
 
+}
 
-};
+void DisabledInit() override {
+
+}
+
+void DisabledPeriodic() override {
+   frc::SmartDashboard::PutNumber("Nav X Yaw", ahrs->GetAngle());
+   frc::SmartDashboard::PutNumber("Nav X Roll", ahrs->GetRoll());
+   frc::SmartDashboard::PutNumber("Nav X Pitch", ahrs->GetPitch());
+
+}
+
 
  
 };  
