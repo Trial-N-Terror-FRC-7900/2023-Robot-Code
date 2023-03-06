@@ -405,13 +405,80 @@ void AutonomousPeriodic() override {
     }
   }
 
-  if(SelectedAuto == 4){
+  if(SelectedAuto == 3){
           frc::SmartDashboard::PutNumber("Robot Pitch", ahrs->GetRoll());
       //if(fabs(rightEncoder.GetPosition()) < 2.0){
         m_robotDrive.ArcadeDrive(-0.025*(ahrs->GetRoll()), 0);
  // }
 }
-}
+
+  if(SelectedAuto == 4){ //8ft, turn right, 3 ft, turn right, 3ft
+      frc::SmartDashboard::PutNumber("auto step", autoStep);
+    if(autoStep == 0){
+        frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
+        frc::SmartDashboard::PutString("AutoPart", "Part1");
+        if(rightEncoder.GetPosition() < 8.0){ 
+          m_robotDrive.ArcadeDrive(0.6, 0); 
+        }
+        else{
+          frc::SmartDashboard::PutString("AutoPart", "Part2");
+          m_robotDrive.ArcadeDrive(0, 0); 
+          autoStep = 1;
+          rightEncoder.SetPosition(0); 
+          leftEncoder.SetPosition(0);
+        }
+      }
+    }
+    if(autoStep == 1){
+      m_robotDrive.ArcadeDrive(-0.025*(ahrs->GetYaw()), .3);
+        autoStep = 2;
+      
+    }
+    if(autoStep == 2){
+        frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
+        frc::SmartDashboard::PutString("AutoPart", "Part1");
+        if(rightEncoder.GetPosition() < 3.0){ 
+          m_robotDrive.ArcadeDrive(0.6, 0); 
+        }
+        else{
+          frc::SmartDashboard::PutString("AutoPart", "Part2");
+          m_robotDrive.ArcadeDrive(0, 0); 
+          autoStep = 3;
+          rightEncoder.SetPosition(0); 
+          leftEncoder.SetPosition(0);
+        }
+     }
+    if(autoStep == 3){
+      m_robotDrive.ArcadeDrive(-0.025*(ahrs->GetYaw()), .3);
+        autoStep = 4;
+      }
+    if(autoStep == 4){
+        frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
+        frc::SmartDashboard::PutString("AutoPart", "Part1");
+        if(rightEncoder.GetPosition() < 3.0){ 
+          m_robotDrive.ArcadeDrive(0.6, 0); 
+        }
+        else{
+          frc::SmartDashboard::PutString("AutoPart", "Part2");
+          m_robotDrive.ArcadeDrive(0, 0); 
+          autoStep = 5;
+          rightEncoder.SetPosition(0); 
+          leftEncoder.SetPosition(0);
+        }
+    }
+    if(autoStep == 5){
+          frc::SmartDashboard::PutNumber("Robot Pitch", ahrs->GetRoll());
+        m_robotDrive.ArcadeDrive(-0.025*(ahrs->GetRoll()), 0);
+    }
+
+
+    }
+
+
+
+
+
+
   // Teleop Area
   void TeleopInit() override {
 
@@ -534,6 +601,24 @@ void AutonomousPeriodic() override {
 		if (m_stickOperator.GetRightBumperPressed()) {
 			armExtend.Set(ControlMode::PercentOutput, Deadband(leftYstick, 0.01));
 		}
+
+
+
+    //coast mode
+    if (m_stickDrive.GetRawButton(5)){
+     rightLeadmotor.SetIdleMode(rev::CANSparkMax::IdleMode::kCoast);
+     rightFollowmotor.SetIdleMode(rev::CANSparkMax::IdleMode::kCoast);
+     leftLeadmotor.SetIdleMode(rev::CANSparkMax::IdleMode::kCoast);
+     leftFollowmotor.SetIdleMode(rev::CANSparkMax::IdleMode::kCoast);
+    }
+
+    //break mode
+    if (m_stickDrive.GetRawButton(6)){
+     rightLeadmotor.SetIdleMode(rev::CANSparkMax::IdleMode::kBrake);
+     rightFollowmotor.SetIdleMode(rev::CANSparkMax::IdleMode::kBrake);
+     leftLeadmotor.SetIdleMode(rev::CANSparkMax::IdleMode::kBrake);
+     leftFollowmotor.SetIdleMode(rev::CANSparkMax::IdleMode::kBrake);
+    }
 
 
   
