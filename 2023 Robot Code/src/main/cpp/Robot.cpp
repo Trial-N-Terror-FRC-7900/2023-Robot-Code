@@ -388,7 +388,7 @@ void AutonomousPeriodic() override {
     if(autoStep == 2){
       frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
       if(rightEncoder.GetPosition() > -8.5){ 
-        m_robotDrive.ArcadeDrive(-0.6, 0); 
+        m_robotDrive.ArcadeDrive(0.6, 0); 
       }
       else{
         m_robotDrive.ArcadeDrive(0, 0); 
@@ -417,8 +417,8 @@ void AutonomousPeriodic() override {
     if(autoStep == 0){
         frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
         frc::SmartDashboard::PutString("AutoPart", "Part1");
-        if(rightEncoder.GetPosition() < 8.0){ 
-          m_robotDrive.ArcadeDrive(0.6, 0); 
+        if(rightEncoder.GetPosition() < 12){ 
+          m_robotDrive.ArcadeDrive(0.8, 0); 
         }
         else{
           frc::SmartDashboard::PutString("AutoPart", "Part2");
@@ -430,33 +430,48 @@ void AutonomousPeriodic() override {
       }
     }
     if(autoStep == 1){
-      m_robotDrive.ArcadeDrive(-0.025*(ahrs->GetYaw()), .3);
+      if(ahrs->GetYaw() > -86.0){
+      m_robotDrive.ArcadeDrive(0, 0.2);
+      }
+      else{
+        m_robotDrive.ArcadeDrive(0, 0);
         autoStep = 2;
-      
+        rightEncoder.SetPosition(0); 
+        leftEncoder.SetPosition(0);
+      }
     }
     if(autoStep == 2){
         frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
         frc::SmartDashboard::PutString("AutoPart", "Part1");
-        if(rightEncoder.GetPosition() < 3.0){ 
-          m_robotDrive.ArcadeDrive(0.6, 0); 
+        if(fabs(rightEncoder.GetPosition()) < 3.0){ 
+          m_robotDrive.ArcadeDrive(-0.8, 0); 
         }
         else{
           frc::SmartDashboard::PutString("AutoPart", "Part2");
           m_robotDrive.ArcadeDrive(0, 0); 
+          ahrs->Reset();
           autoStep = 3;
           rightEncoder.SetPosition(0); 
           leftEncoder.SetPosition(0);
         }
      }
     if(autoStep == 3){
-      m_robotDrive.ArcadeDrive(-0.025*(ahrs->GetYaw()), .3);
+      if(fabs(ahrs->GetYaw()) < 86.0){
+      m_robotDrive.ArcadeDrive(0, 0.2);
+      }
+      else{
+        m_robotDrive.ArcadeDrive(0, 0);
+        ahrs->Reset();
+        rightEncoder.SetPosition(0); 
+        leftEncoder.SetPosition(0);
         autoStep = 4;
+      }
       }
     if(autoStep == 4){
         frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
         frc::SmartDashboard::PutString("AutoPart", "Part1");
         if(rightEncoder.GetPosition() < 3.0){ 
-          m_robotDrive.ArcadeDrive(0.6, 0); 
+          m_robotDrive.ArcadeDrive(0.8, 0); 
         }
         else{
           frc::SmartDashboard::PutString("AutoPart", "Part2");
@@ -469,6 +484,15 @@ void AutonomousPeriodic() override {
     if(autoStep == 5){
           frc::SmartDashboard::PutNumber("Robot Pitch", ahrs->GetRoll());
         m_robotDrive.ArcadeDrive(-0.025*(ahrs->GetRoll()), 0);
+    }
+
+    if(SelectedAuto == 5){
+      if(ahrs->GetYaw() < 90.0){
+      m_robotDrive.ArcadeDrive(0, 2);
+      }
+      else{
+        m_robotDrive.ArcadeDrive(0, 0);
+      }
     }
 
 
@@ -501,7 +525,7 @@ void AutonomousPeriodic() override {
        m_robotDrive.ArcadeDrive(0.2*(Deadband(-m_stickDrive.GetY(), 0.05, 2)), 0.5*Deadband(-m_stickDrive.GetZ(), 0.05, 2));
     }
    else{
-    m_robotDrive.ArcadeDrive(Deadband(-m_stickDrive.GetY(), 0.05, 2), 0.5*Deadband(-m_stickDrive.GetZ(), 0.05, 2)); 
+    m_robotDrive.ArcadeDrive(Deadband(m_stickDrive.GetY(), 0.05, 2), 0.5*Deadband(m_stickDrive.GetZ(), 0.05, 2)); 
     }
     }
 
