@@ -83,13 +83,13 @@ rev::CANSparkMax leftFollowmotor{5, rev::CANSparkMax::MotorType::kBrushless};
 rev::CANSparkMax armRotate{7, rev::CANSparkMax::MotorType::kBrushless};
 rev::CANSparkMax armRotate2{8, rev::CANSparkMax::MotorType::kBrushless};
 
-frc::Compressor phCompressor{15, frc::PneumaticsModuleType::REVPH};
+//frc::Compressor phCompressor{15, frc::PneumaticsModuleType::REVPH};
 
-frc::DoubleSolenoid intakeS{15, frc::PneumaticsModuleType::REVPH, 2, 3};
-frc::DoubleSolenoid intakeN{15, frc::PneumaticsModuleType::REVPH, 4, 5};
+//frc::DoubleSolenoid intakeS{15, frc::PneumaticsModuleType::REVPH, 2, 3};
+//frc::DoubleSolenoid intakeN{15, frc::PneumaticsModuleType::REVPH, 4, 5};
 
 
-CANdle candle{15};
+//CANdle candle{16};
 //void candlePurple(){
         //candle.SetLEDs(75,0,130);}
 //void candleGreen(){
@@ -134,6 +134,7 @@ double drivedistance2 = 6; //72 inches
 double drivedistance3 = -12; //if we are in the far RIGHT of BLUE
 double drivedistance4 = 0.5; //pushing block/cone/whatever fowrard MAYBEEEEEEEEEEE
 double SelectedAuto = 0; //selected auto
+double z = 0;
 
 
 int autoStep = 0;
@@ -146,6 +147,7 @@ AHRS *ahrs;
 
 
   double kP = 0.1, kI = 1e-4, kD = 1, kIz = 0, kFF = 0, kMaxOutput = 1, kMinOutput = -1;
+  bool gyro = ahrs->GetYaw();
 
   //static const double kOffBalanceThresholdDegrees = 10.0f;  //More navx stuff, it's all red so have fun with that
 //static const double kOnBalanceThresholdDegrees = 5.0f
@@ -193,19 +195,18 @@ AHRS *ahrs;
 
     //phCompressor.SetClosedLoopControl(false);
 
-    bool enabled = phCompressor.Enabled();
-    bool pressureSwitch = phCompressor.GetPressureSwitchValue();
+    //bool enabled = phCompressor.Enabled();
+    //bool pressureSwitch = phCompressor.GetPressureSwitchValue();
     //double current = phCompressor.GetCurrent();
-
     
     m_robotDrive.SetDeadband(0);
     rightFollowmotor.Follow(rightLeadmotor);
     leftFollowmotor.Follow(leftLeadmotor);
 
 
-    intakeS.Set(frc::DoubleSolenoid::Value::kOff); //These are supposed to be the different levels it goes or something.
-    intakeS.Set(frc::DoubleSolenoid::Value::kForward);
-    intakeS.Set(frc::DoubleSolenoid::Value::kReverse);
+    //intakeS.Set(frc::DoubleSolenoid::Value::kOff); //These are supposed to be the different levels it goes or something.
+    //intakeS.Set(frc::DoubleSolenoid::Value::kForward);
+    //intakeS.Set(frc::DoubleSolenoid::Value::kReverse);
 
     int _loops = 0;
 	  bool _lastButton1 = false;
@@ -248,7 +249,7 @@ AHRS *ahrs;
 
   config.brightnessScalar = 0.5; 
 
-  candle.ConfigAllSettings(config);
+  //candle.ConfigAllSettings(config);
   
 
   //RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
@@ -412,13 +413,14 @@ void AutonomousPeriodic() override {
  // }
 }
 
-  if(SelectedAuto == 4){ //8ft, turn right, 3 ft, turn right, 3ft
+
+  if(SelectedAuto == 4){ //8ft, turn left, 3 ft, turn left, 3ft
       frc::SmartDashboard::PutNumber("auto step", autoStep);
     if(autoStep == 0){
         frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
         frc::SmartDashboard::PutString("AutoPart", "Part1");
         if(rightEncoder.GetPosition() < 12){ 
-          m_robotDrive.ArcadeDrive(0.8, 0); 
+          m_robotDrive.ArcadeDrive(0.6, 0); 
         }
         else{
           frc::SmartDashboard::PutString("AutoPart", "Part2");
@@ -431,7 +433,7 @@ void AutonomousPeriodic() override {
     }
     if(autoStep == 1){
       if(ahrs->GetYaw() > -86.0){
-      m_robotDrive.ArcadeDrive(0, 0.2);
+      m_robotDrive.ArcadeDrive(0, 0.25);
       }
       else{
         m_robotDrive.ArcadeDrive(0, 0);
@@ -444,7 +446,7 @@ void AutonomousPeriodic() override {
         frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
         frc::SmartDashboard::PutString("AutoPart", "Part1");
         if(fabs(rightEncoder.GetPosition()) < 3.0){ 
-          m_robotDrive.ArcadeDrive(-0.8, 0); 
+          m_robotDrive.ArcadeDrive(-0.6, 0); 
         }
         else{
           frc::SmartDashboard::PutString("AutoPart", "Part2");
@@ -457,7 +459,7 @@ void AutonomousPeriodic() override {
      }
     if(autoStep == 3){
       if(fabs(ahrs->GetYaw()) < 86.0){
-      m_robotDrive.ArcadeDrive(0, 0.2);
+      m_robotDrive.ArcadeDrive(0, 0.25);
       }
       else{
         m_robotDrive.ArcadeDrive(0, 0);
@@ -471,7 +473,7 @@ void AutonomousPeriodic() override {
         frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
         frc::SmartDashboard::PutString("AutoPart", "Part1");
         if(rightEncoder.GetPosition() < 3.0){ 
-          m_robotDrive.ArcadeDrive(0.8, 0); 
+          m_robotDrive.ArcadeDrive(0.6, 0); 
         }
         else{
           frc::SmartDashboard::PutString("AutoPart", "Part2");
@@ -486,20 +488,96 @@ void AutonomousPeriodic() override {
         m_robotDrive.ArcadeDrive(-0.025*(ahrs->GetRoll()), 0);
     }
 
-    if(SelectedAuto == 5){
-      if(ahrs->GetYaw() < 90.0){
-      m_robotDrive.ArcadeDrive(0, 2);
+
+
+      if(SelectedAuto == 5){ //8ft, turn right, 3 ft, turn right, 3ft
+      frc::SmartDashboard::PutNumber("auto step", autoStep);
+    if(autoStep == 0){
+        frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
+        frc::SmartDashboard::PutString("AutoPart", "Part1");
+        if(rightEncoder.GetPosition() < 12){ 
+          m_robotDrive.ArcadeDrive(0.6, 0); 
+        }
+        else{
+          frc::SmartDashboard::PutString("AutoPart", "Part2");
+          m_robotDrive.ArcadeDrive(0, 0); 
+          autoStep = 1;
+          rightEncoder.SetPosition(0); 
+          leftEncoder.SetPosition(0);
+        }
+      }
+    }
+    if(autoStep == 1){
+      if(ahrs->GetYaw() < 86.0){
+      m_robotDrive.ArcadeDrive(0, 0.25);
       }
       else{
         m_robotDrive.ArcadeDrive(0, 0);
+        autoStep = 2;
+        rightEncoder.SetPosition(0); 
+        leftEncoder.SetPosition(0);
       }
     }
-
-
+    if(autoStep == 2){
+        frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
+        frc::SmartDashboard::PutString("AutoPart", "Part1");
+        if(fabs(rightEncoder.GetPosition()) < 3.0){ 
+          m_robotDrive.ArcadeDrive(-0.6, 0); 
+        }
+        else{
+          frc::SmartDashboard::PutString("AutoPart", "Part2");
+          m_robotDrive.ArcadeDrive(0, 0); 
+          ahrs->Reset();
+          autoStep = 3;
+          rightEncoder.SetPosition(0); 
+          leftEncoder.SetPosition(0);
+        }
+     }
+    if(autoStep == 3){
+      if(fabs(ahrs->GetYaw()) > -86.0){
+      m_robotDrive.ArcadeDrive(0, 0.25);
+      }
+      else{
+        m_robotDrive.ArcadeDrive(0, 0);
+        ahrs->Reset();
+        rightEncoder.SetPosition(0); 
+        leftEncoder.SetPosition(0);
+        autoStep = 4;
+      }
+      }
+    if(autoStep == 4){
+        frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
+        frc::SmartDashboard::PutString("AutoPart", "Part1");
+        if(rightEncoder.GetPosition() < 3.0){ 
+          m_robotDrive.ArcadeDrive(0.6, 0); 
+        }
+        else{
+          frc::SmartDashboard::PutString("AutoPart", "Part2");
+          m_robotDrive.ArcadeDrive(0, 0); 
+          autoStep = 5;
+          rightEncoder.SetPosition(0); 
+          leftEncoder.SetPosition(0);
+        }
+    }
+    if(autoStep == 5){
+          frc::SmartDashboard::PutNumber("Robot Pitch", ahrs->GetRoll());
+        m_robotDrive.ArcadeDrive(-0.025*(ahrs->GetRoll()), 0);
     }
 
 
+if(SelectedAuto == 6){
+  gyro = ahrs->GetYaw();
+	z = ((gyro - 90) * -0.015);
+	if(fabs(gyro-90)< 4){  
+    autoStep++;
+	}
 
+	m_robotDrive.ArcadeDrive(0, z);
+	frc::SmartDashboard::PutNumber("Gyro", gyro);
+}
+
+
+}
 
 
 
@@ -585,25 +663,25 @@ void AutonomousPeriodic() override {
 
 
 
-   if(m_stickDrive.GetRawButton(7)){
-      candle.ClearAnimation(0);
-      }
-   if(m_stickDrive.GetRawButtonPressed(8)){
-      RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
-        candle.Animate(*rainbowAnim);
-        frc::SmartDashboard::PutNumber("candle", 2);
-      }
+   //if(m_stickDrive.GetRawButton(7)){
+   //   candle.ClearAnimation(0);
+   //   }
+   //if(m_stickDrive.GetRawButtonPressed(8)){
+   //   RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
+   //     candle.Animate(*rainbowAnim);
+    //    frc::SmartDashboard::PutNumber("candle", 2);
+     // }
 
-   if(m_stickDrive.GetRawButton(9)){
-    candle.SetLEDs(0, 119, 20);
-   }
+  // if(m_stickDrive.GetRawButton(9)){
+   // candle.SetLEDs(0, 119, 20);
+   //}
 
-   if(m_stickDrive.GetRawButton(10)){
-    candle.SetLEDs(75,0,130);
-   }
-   if(m_stickDrive.GetRawButton(11)){
-    candle.SetLEDs(255,255,0);
-   }
+   //if(m_stickDrive.GetRawButton(10)){
+   // candle.SetLEDs(75,0,130);
+   //}
+   //if(m_stickDrive.GetRawButton(11)){
+   // candle.SetLEDs(255,255,0);
+   //}
 
 
 
