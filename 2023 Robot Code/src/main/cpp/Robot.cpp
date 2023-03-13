@@ -18,6 +18,7 @@
 #include <frc/DoubleSolenoid.h>
 #include <iostream>
 #include <frc/Timer.h>
+#include <frc/Encoder.h>
 
 #include "ctre/phoenix/led/ColorFlowAnimation.h"
 #include "ctre/phoenix/led/FireAnimation.h"
@@ -107,11 +108,31 @@ WPI_TalonFX armExtend{6};
 
 frc::Timer timer;
 
+ /*
+ * Change these parameters to match your setup
+ */
+static constexpr int kCanID = 7;
+static constexpr auto kMotorType = rev::CANSparkMax::MotorType::kBrushless;
+static constexpr auto kAltEncType = rev::SparkMaxAlternateEncoder::Type::kQuadrature;
+static constexpr int kCPR = 8192;
+
+// initialize SPARK MAX with CAN ID
+rev::CANSparkMax armRotate{kCanID, kMotorType};
+
+/** 
+* An alternate encoder object is constructed using the GetAlternateEncoder() 
+* method on an existing CANSparkMax object. If using a REV Through Bore 
+* Encoder, the type should be set to quadrature and the counts per 
+* revolution set to 8192
+*/
+rev::SparkMaxAlternateEncoder m_alternateEncoder = armRotate.GetAlternateEncoder(kAltEncType, kCPR);
+
 
 std::string _sb;
 int kPIDLoopIdx;
 bool kTimeoutMs;
 int targetPositionRotations;
+
 int _loops = 0;
 bool _lastButton1 = false;
 
@@ -202,6 +223,8 @@ AHRS *ahrs;
     m_robotDrive.SetDeadband(0);
     rightFollowmotor.Follow(rightLeadmotor);
     leftFollowmotor.Follow(leftLeadmotor);
+
+    armRotate2.Follow(armRotate);
 
 
     //intakeS.Set(frc::DoubleSolenoid::Value::kOff); //These are supposed to be the different levels it goes or something.
@@ -800,7 +823,7 @@ void AutonomousPeriodic() override {
 
 		double leftYstick = m_stickOperator.GetLeftTriggerAxis();
 	
-		//press button and ot'll go where you want it to go
+		//press button and it'll go where you want it to go
 		if (m_stickOperator.GetYButtonPressed()) {
 			armExtend.Set(ControlMode::Position, 5000); 
 		}
