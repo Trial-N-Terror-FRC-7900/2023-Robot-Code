@@ -82,7 +82,7 @@ rev::CANSparkMax rightFollowmotor{3, rev::CANSparkMax::MotorType::kBrushless};
 rev::CANSparkMax leftLeadmotor{4, rev::CANSparkMax::MotorType::kBrushless};
 rev::CANSparkMax leftFollowmotor{5, rev::CANSparkMax::MotorType::kBrushless};
 rev::CANSparkMax armRotate{7, rev::CANSparkMax::MotorType::kBrushless};
-rev::CANSparkMax armRotate2{8, rev::CANSparkMax::MotorType::kBrushless};
+rev::CANSparkMax armRotate2{10, rev::CANSparkMax::MotorType::kBrushless};
 
 //frc::Compressor phCompressor{15, frc::PneumaticsModuleType::REVPH};
 
@@ -100,8 +100,8 @@ rev::CANSparkMax armRotate2{8, rev::CANSparkMax::MotorType::kBrushless};
 double scale = 250, offset = -25;
 //frc::AnalogPotentiometer pressureTransducer{1, scale, offset};
 
-WPI_VictorSPX intakemotorF{9};
-WPI_VictorSPX intakemotorR{10}; 
+//WPI_VictorSPX intakemotorF{9};
+//WPI_VictorSPX intakemotorR{10}; 
 WPI_VictorSPX handF{13};
 WPI_VictorSPX handR{14}; 
 WPI_TalonFX armExtend{6};
@@ -125,7 +125,9 @@ rev::CANSparkMax armRotate{kCanID, kMotorType};
 * Encoder, the type should be set to quadrature and the counts per 
 * revolution set to 8192
 */
-rev::SparkMaxAlternateEncoder m_alternateEncoder = armRotate.GetAlternateEncoder(kAltEncType, kCPR);
+rev::SparkMaxAlternateEncoder armREncoder = armRotate.GetAlternateEncoder(kAltEncType, kCPR);
+double armRGoal = 0;
+double armEGoal = 0;
 
 
 std::string _sb;
@@ -141,7 +143,6 @@ frc::Joystick m_stickDrive{0};
 frc::XboxController m_stickOperator{1};
 
 rev::SparkMaxPIDController m_pidController = armRotate.GetPIDController();
-rev::SparkMaxRelativeEncoder motor8encoder = armRotate2.GetEncoder(rev::SparkMaxRelativeEncoder::Type::kHallSensor, 42); //place holder for now to make sure the code was correct
 
 rev::SparkMaxLimitSwitch forwardLimit = armRotate.GetForwardLimitSwitch(rev::SparkMaxLimitSwitch::Type::kNormallyClosed);
 rev::SparkMaxLimitSwitch reverseLimit = armRotate2.GetReverseLimitSwitch(rev::SparkMaxLimitSwitch::Type::kNormallyClosed);
@@ -180,13 +181,13 @@ AHRS *ahrs;
     rightFollowmotor.RestoreFactoryDefaults();
     leftLeadmotor.RestoreFactoryDefaults();
     leftFollowmotor.RestoreFactoryDefaults();
-    intakemotorF.ConfigFactoryDefault();
+    //intakemotorF.ConfigFactoryDefault();
     // We need to invert one side of the drivetrain so that positive voltages
     // result in both sides moving forward. Depending on how your robot's
     // gearbox is constructed, you might have to invert the left side instead.
 
     rightLeadmotor.SetInverted(true);
-    
+
 
     //PID start
     m_pidController.SetP(kP);
@@ -224,7 +225,8 @@ AHRS *ahrs;
     rightFollowmotor.Follow(rightLeadmotor);
     leftFollowmotor.Follow(leftLeadmotor);
 
-    armRotate2.Follow(armRotate);
+    armRotate2.Follow(armRotate, true);
+    
 
 
     //intakeS.Set(frc::DoubleSolenoid::Value::kOff); //These are supposed to be the different levels it goes or something.
@@ -711,7 +713,31 @@ void AutonomousPeriodic() override {
 
   }
   
+  if(SelectedAuto == 8){ //This hypothetically place something and the move out of community ?
+    if(autoStep == 0){
 
+     armExtend.Set(ControlMode::Position, 5000);
+     autoStep = 1;
+    }
+    if(autoStep == 1){
+
+     handF.Set(0.3);
+     autoStep = 2;
+    }
+    if(autoStep == 2){
+
+     frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
+      if(rightEncoder.GetPosition() < 12){ 
+       m_robotDrive.ArcadeDrive(0.8, 0); 
+      }
+      else{
+       ahrs->Reset();
+       m_robotDrive.ArcadeDrive(0, 0);
+       rightEncoder.SetPosition(0); 
+       leftEncoder.SetPosition(0);
+        }
+    }
+  }
 
 }
 
@@ -819,27 +845,43 @@ void AutonomousPeriodic() override {
    // candle.SetLEDs(255,255,0);
    //}
 
+    double armRotaion = armREncoder.GetPosition();
 
+    if(fabs(armRotaion - armRGoal) > 30/360){ //roataion in rotaions lol not degree bUT I CAN DIVIDE
+      if(armExtend.GetSelectedSensorPosition(0) > 2){
+          armExtend.Set(ControlMode::Position, 0);
+      }
+      else{
+        m_pidController.SetReference(armRGoal, rev::CANSparkMax::ControlType::kPosition); //roate :thumbs_up:
+      }
+    }
+    else{
+       armExtend.Set(ControlMode::Position, armEGoal);
+    }
 
-		double leftYstick = m_stickOperator.GetLeftTriggerAxis();
+		double leftYstick = m_stickOperator.GetLeftY();
 	
 		//press button and it'll go where you want it to go
 		if (m_stickOperator.GetYButtonPressed()) {
-			armExtend.Set(ControlMode::Position, 5000); 
+      armRGoal = 0.03;
+      armEGoal = 5000;
 		}
 
     if (m_stickOperator.GetXButtonPressed()) {
-		armExtend.Set(ControlMode::Position, 4500); 
+      armRGoal = 0.02;
+      armEGoal = 4500;
 		}
 
     if (m_stickOperator.GetAButtonPressed()) {
-		armExtend.Set(ControlMode::Position, 4000); 
+      armRGoal = 0.01;
+      armEGoal = 4000;
 		}
 		//override, add deadband for xbox controller 
 		if (m_stickOperator.GetRightBumperPressed()) {
 			armExtend.Set(ControlMode::PercentOutput, Deadband(leftYstick, 0.01));
 		}
 
+    
 
 
     //coast mode
@@ -882,11 +924,10 @@ void AutonomousPeriodic() override {
       m_pidController.SetOutputRange(min, max);
     }
       kMinOutput = min; kMaxOutput = max;
-    m_pidController.SetReference(rotations, rev::CANSparkMax::ControlType::kPosition);
   //end PID control
     
     frc::SmartDashboard::PutNumber("SetPoint", rotations);
-    frc::SmartDashboard::PutNumber("ProcessVariable", motor8encoder.GetPosition());
+    frc::SmartDashboard::PutNumber("ProcessVariable", armREncoder.GetPosition());
 
     frc::SmartDashboard::PutBoolean("Forward Limit Switch", forwardLimit.Get());
     frc::SmartDashboard::PutBoolean("Reverse Limit Switch", forwardLimit.Get());

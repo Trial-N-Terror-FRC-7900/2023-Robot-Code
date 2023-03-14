@@ -21,7 +21,8 @@
     "random": "cpp",
     "future": "cpp",
     "optional": "cpp",
-    "new": "cpp"
+    "new": "cpp",
+    "*.inc": "cpp"
   },
   "C_Cpp.errorSquiggles": "enabled"
 }
