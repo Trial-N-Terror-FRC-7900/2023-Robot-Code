@@ -90,7 +90,7 @@ rev::CANSparkMax armRotate2{10, rev::CANSparkMax::MotorType::kBrushless};
 //frc::DoubleSolenoid intakeN{15, frc::PneumaticsModuleType::REVPH, 4, 5};
 
 
-//CANdle candle{16};
+CANdle candle{16};
 //void candlePurple(){
         //candle.SetLEDs(75,0,130);}
 //void candleGreen(){
@@ -116,8 +116,7 @@ static constexpr auto kMotorType = rev::CANSparkMax::MotorType::kBrushless;
 static constexpr auto kAltEncType = rev::SparkMaxAlternateEncoder::Type::kQuadrature;
 static constexpr int kCPR = 8192;
 
-// initialize SPARK MAX with CAN ID
-rev::CANSparkMax armRotate{kCanID, kMotorType};
+
 
 /** 
 * An alternate encoder object is constructed using the GetAlternateEncoder() 
@@ -142,7 +141,7 @@ frc::DifferentialDrive m_robotDrive{rightLeadmotor, leftLeadmotor};
 frc::Joystick m_stickDrive{0};
 frc::XboxController m_stickOperator{1};
 
-rev::SparkMaxPIDController m_pidController = armRotate.GetPIDController();
+rev::SparkMaxPIDController armPID = armRotate.GetPIDController();
 
 rev::SparkMaxLimitSwitch forwardLimit = armRotate.GetForwardLimitSwitch(rev::SparkMaxLimitSwitch::Type::kNormallyClosed);
 rev::SparkMaxLimitSwitch reverseLimit = armRotate2.GetReverseLimitSwitch(rev::SparkMaxLimitSwitch::Type::kNormallyClosed);
@@ -190,12 +189,12 @@ AHRS *ahrs;
 
 
     //PID start
-    m_pidController.SetP(kP);
-    m_pidController.SetI(kI);
-    m_pidController.SetD(kD);
-    m_pidController.SetIZone(kIz);
-    m_pidController.SetFF(kFF);
-    m_pidController.SetOutputRange(kMinOutput, kMaxOutput);
+    armPID.SetP(kP);
+    armPID.SetI(kI);
+    armPID.SetD(kD);
+    armPID.SetIZone(kIz);
+    armPID.SetFF(kFF);
+    armPID.SetOutputRange(kMinOutput, kMaxOutput);
 
     frc::SmartDashboard::PutNumber("P Gain", kP);
     frc::SmartDashboard::PutNumber("I Gain", kI);
@@ -226,6 +225,9 @@ AHRS *ahrs;
     leftFollowmotor.Follow(leftLeadmotor);
 
     armRotate2.Follow(armRotate, true);
+    armRotate.SetIdleMode(rev::CANSparkMax::IdleMode::kBrake);
+    armRotate2.SetIdleMode(rev::CANSparkMax::IdleMode::kBrake);
+    armExtend.SetNeutralMode(NeutralMode::Brake);
     
 
 
@@ -274,11 +276,11 @@ AHRS *ahrs;
 
   config.brightnessScalar = 0.5; 
 
-  //candle.ConfigAllSettings(config);
+  candle.ConfigAllSettings(config);
   
 
-  //RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
-  //candle.Animate(*rainbowAnim);
+  RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
+  candle.Animate(*rainbowAnim);
 
   //candle.SetLEDs(225, 225, 225);
   //virtual  Animation(1, 0.5, 64);
@@ -825,25 +827,25 @@ void AutonomousPeriodic() override {
 
 
 
-   //if(m_stickDrive.GetRawButton(7)){
-   //   candle.ClearAnimation(0);
-   //   }
-   //if(m_stickDrive.GetRawButtonPressed(8)){
-   //   RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
-   //     candle.Animate(*rainbowAnim);
-    //    frc::SmartDashboard::PutNumber("candle", 2);
-     // }
+   if(m_stickDrive.GetRawButton(7)){
+      candle.ClearAnimation(0);
+      }
+   if(m_stickDrive.GetRawButtonPressed(8)){
+      RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
+        candle.Animate(*rainbowAnim);
+        frc::SmartDashboard::PutNumber("candle", 2);
+      }
 
-  // if(m_stickDrive.GetRawButton(9)){
-   // candle.SetLEDs(0, 119, 20);
-   //}
+   if(m_stickDrive.GetRawButton(9)){
+    candle.SetLEDs(0, 119, 20);
+   }
 
-   //if(m_stickDrive.GetRawButton(10)){
-   // candle.SetLEDs(75,0,130);
-   //}
-   //if(m_stickDrive.GetRawButton(11)){
-   // candle.SetLEDs(255,255,0);
-   //}
+   if(m_stickDrive.GetRawButton(10)){
+    candle.SetLEDs(75,0,130);
+   }
+   if(m_stickDrive.GetRawButton(11)){
+    candle.SetLEDs(255,255,0);
+   }
 
     double armRotaion = armREncoder.GetPosition();
 
@@ -852,7 +854,7 @@ void AutonomousPeriodic() override {
           armExtend.Set(ControlMode::Position, 0);
       }
       else{
-        m_pidController.SetReference(armRGoal, rev::CANSparkMax::ControlType::kPosition); //roate :thumbs_up:
+        armPID.SetReference(armRGoal, rev::CANSparkMax::ControlType::kPosition); //roate :thumbs_up:
       }
     }
     else{
@@ -880,6 +882,7 @@ void AutonomousPeriodic() override {
 		if (m_stickOperator.GetRightBumperPressed()) {
 			armExtend.Set(ControlMode::PercentOutput, Deadband(leftYstick, 0.01));
 		}
+    
 
     
 
@@ -915,13 +918,13 @@ void AutonomousPeriodic() override {
    double min = frc::SmartDashboard::GetNumber("Min Output", 0);
    double rotations = frc::SmartDashboard::GetNumber("Set Rotations", 0);
 
-    if((p != kP)) { m_pidController.SetP(p); kP = p; }
-    if((i != kI)) { m_pidController.SetI(i); kI = i; }
-    if((d != kD)) { m_pidController.SetD(d); kD = d; }
-    if((iz != kIz)) { m_pidController.SetIZone(iz); kIz = iz; }
-    if((ff != kFF)) { m_pidController.SetFF(ff); kFF = ff; }
+    if((p != kP)) { armPID.SetP(p); kP = p; }
+    if((i != kI)) { armPID.SetI(i); kI = i; }
+    if((d != kD)) { armPID.SetD(d); kD = d; }
+    if((iz != kIz)) { armPID.SetIZone(iz); kIz = iz; }
+    if((ff != kFF)) { armPID.SetFF(ff); kFF = ff; }
     if((max != kMaxOutput) || (min != kMinOutput)) { 
-      m_pidController.SetOutputRange(min, max);
+      armPID.SetOutputRange(min, max);
     }
       kMinOutput = min; kMaxOutput = max;
   //end PID control
