@@ -111,12 +111,6 @@ frc::Timer timer;
  /*
  * Change these parameters to match your setup
  */
-static constexpr int kCanID = 7;
-static constexpr auto kMotorType = rev::CANSparkMax::MotorType::kBrushless;
-static constexpr auto kAltEncType = rev::SparkMaxAlternateEncoder::Type::kQuadrature;
-static constexpr int kCPR = 8192;
-
-
 
 /** 
 * An alternate encoder object is constructed using the GetAlternateEncoder() 
@@ -124,7 +118,7 @@ static constexpr int kCPR = 8192;
 * Encoder, the type should be set to quadrature and the counts per 
 * revolution set to 8192
 */
-rev::SparkMaxAlternateEncoder armREncoder = armRotate.GetAlternateEncoder(kAltEncType, kCPR);
+
 double armRGoal = 0;
 double armEGoal = 0;
 
@@ -141,10 +135,11 @@ frc::DifferentialDrive m_robotDrive{rightLeadmotor, leftLeadmotor};
 frc::Joystick m_stickDrive{0};
 frc::XboxController m_stickOperator{1};
 
+rev::SparkMaxAbsoluteEncoder armREncoder = armRotate.GetAbsoluteEncoder(rev::SparkMaxAbsoluteEncoder::Type::kDutyCycle);
 rev::SparkMaxPIDController armPID = armRotate.GetPIDController();
 
-rev::SparkMaxLimitSwitch forwardLimit = armRotate.GetForwardLimitSwitch(rev::SparkMaxLimitSwitch::Type::kNormallyClosed);
-rev::SparkMaxLimitSwitch reverseLimit = armRotate2.GetReverseLimitSwitch(rev::SparkMaxLimitSwitch::Type::kNormallyClosed);
+//rev::SparkMaxLimitSwitch forwardLimit = armRotate.GetForwardLimitSwitch(rev::SparkMaxLimitSwitch::Type::kNormallyClosed);
+//rev::SparkMaxLimitSwitch reverseLimit = armRotate2.GetReverseLimitSwitch(rev::SparkMaxLimitSwitch::Type::kNormallyClosed);
 
 rev::SparkMaxRelativeEncoder rightEncoder = rightLeadmotor.GetEncoder(rev::SparkMaxRelativeEncoder::Type::kHallSensor, 42);
 rev::SparkMaxRelativeEncoder leftEncoder = leftLeadmotor.GetEncoder(rev::SparkMaxRelativeEncoder::Type::kHallSensor, 42);
@@ -195,6 +190,7 @@ AHRS *ahrs;
     armPID.SetIZone(kIz);
     armPID.SetFF(kFF);
     armPID.SetOutputRange(kMinOutput, kMaxOutput);
+    armPID.SetFeedbackDevice(armREncoder);
 
     frc::SmartDashboard::PutNumber("P Gain", kP);
     frc::SmartDashboard::PutNumber("I Gain", kI);
@@ -209,10 +205,10 @@ AHRS *ahrs;
     frc::SmartDashboard::PutNumber("Selected Auto", 0);
 
     //Spark Maxes limit switches
-    forwardLimit.EnableLimitSwitch(false);
-    reverseLimit.EnableLimitSwitch(false);
-    frc::SmartDashboard::PutBoolean("Forward Limit Enabled", forwardLimit.IsLimitSwitchEnabled());
-    frc::SmartDashboard::PutBoolean("Reverse Limit Enabled", reverseLimit.IsLimitSwitchEnabled());
+    //forwardLimit.EnableLimitSwitch(false);
+    //reverseLimit.EnableLimitSwitch(false);
+    //frc::SmartDashboard::PutBoolean("Forward Limit Enabled", forwardLimit.IsLimitSwitchEnabled());
+    //frc::SmartDashboard::PutBoolean("Reverse Limit Enabled", reverseLimit.IsLimitSwitchEnabled());
 
     //phCompressor.SetClosedLoopControl(false);
 
@@ -227,7 +223,18 @@ AHRS *ahrs;
     armRotate2.Follow(armRotate, true);
     armRotate.SetIdleMode(rev::CANSparkMax::IdleMode::kBrake);
     armRotate2.SetIdleMode(rev::CANSparkMax::IdleMode::kBrake);
+    armRotate.SetSmartCurrentLimit(20);
+    armRotate2.SetSmartCurrentLimit(20);
+    armRotate.SetInverted(true);
+
+    armRotate.SetSoftLimit(rev::CANSparkMax::SoftLimitDirection::kReverse, 2);
+    armRotate.SetSoftLimit(rev::CANSparkMax::SoftLimitDirection::kForward, 252);
+
+    armREncoder.SetPositionConversionFactor(360); // converts to degrees instead of rotations
+    //armREncoder.GetInverted();
+
     armExtend.SetNeutralMode(NeutralMode::Brake);
+
     
 
 
@@ -253,9 +260,7 @@ AHRS *ahrs;
 		armExtend.SetSelectedSensorPosition(absolutePosition, kPIDLoopIdx, kTimeoutMs);
 
 		/* choose the sensor and sensor direction */
-		armExtend.ConfigSelectedFeedbackSensor(
-				FeedbackDevice::CTRE_MagEncoder_Relative, kPIDLoopIdx,
-				kTimeoutMs);
+		armExtend.ConfigSelectedFeedbackSensor(FeedbackDevice::CTRE_MagEncoder_Relative, kPIDLoopIdx,kTimeoutMs);
 		armExtend.SetSensorPhase(true);
 
 		/* set the peak and nominal outputs, 12V means full */
@@ -278,7 +283,6 @@ AHRS *ahrs;
 
   candle.ConfigAllSettings(config);
   
-
   RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
   candle.Animate(*rainbowAnim);
 
@@ -758,17 +762,16 @@ void AutonomousPeriodic() override {
 
     //frc::SmartDashboard::PutNumber("Robot Pitch", ahrs->GetRoll());
      if(m_stickDrive.GetRawButton(4)){ 
-   //  frc::SmartDashboard::PutNumber("Robot Pitch", ahrs->GetRoll());
+      //frc::SmartDashboard::PutNumber("Robot Pitch", ahrs->GetRoll());
       m_robotDrive.ArcadeDrive(-0.025*(ahrs->GetRoll()), 0);
     }
     else{
-
       if(m_stickDrive.GetRawButton(1)){
-       m_robotDrive.ArcadeDrive(0.2*(Deadband(m_stickDrive.GetY(), 0.05, 2)), 0.5*Deadband(-m_stickDrive.GetZ(), 0.05, 2));
-    }
-   else{
-    m_robotDrive.ArcadeDrive(Deadband(m_stickDrive.GetY(), 0.05, 2), 0.5*Deadband(-m_stickDrive.GetZ(), 0.05, 2)); 
-    }
+        m_robotDrive.ArcadeDrive(0.2*(Deadband(m_stickDrive.GetY(), 0.05, 2)), 0.5*Deadband(-m_stickDrive.GetZ(), 0.05, 2));
+      }
+      else{
+        m_robotDrive.ArcadeDrive(Deadband(m_stickDrive.GetY(), 0.05, 2), 0.5*Deadband(-m_stickDrive.GetZ(), 0.05, 2)); 
+      }
     }
 
     if(m_stickDrive.GetRawButton(3)){
@@ -829,12 +832,12 @@ void AutonomousPeriodic() override {
 
    if(m_stickDrive.GetRawButton(7)){
       candle.ClearAnimation(0);
-      }
+   }
    if(m_stickDrive.GetRawButtonPressed(8)){
       RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
         candle.Animate(*rainbowAnim);
         frc::SmartDashboard::PutNumber("candle", 2);
-      }
+  }
 
    if(m_stickDrive.GetRawButton(9)){
     candle.SetLEDs(0, 119, 20);
@@ -848,7 +851,12 @@ void AutonomousPeriodic() override {
    }
 
     double armRotaion = armREncoder.GetPosition();
+    frc::SmartDashboard::PutNumber("Arm Roatation Encoder", armRotaion);
 
+    double armExtention = armExtend.GetSelectedSensorPosition();
+    frc::SmartDashboard::PutNumber("Arm Extention Encoder", armExtention);
+
+    /*
     if(fabs(armRotaion - armRGoal) > 30/360){ //roataion in rotaions lol not degree bUT I CAN DIVIDE
       if(armExtend.GetSelectedSensorPosition(0) > 2){
           armExtend.Set(ControlMode::Position, 0);
@@ -860,6 +868,7 @@ void AutonomousPeriodic() override {
     else{
        armExtend.Set(ControlMode::Position, armEGoal);
     }
+    */
 
 		double leftYstick = m_stickOperator.GetLeftY();
 	
@@ -867,26 +876,27 @@ void AutonomousPeriodic() override {
 		if (m_stickOperator.GetYButtonPressed()) {
       armRGoal = 0.03;
       armEGoal = 5000;
+      armPID.SetReference(30, rev::CANSparkMax::ControlType::kPosition);
 		}
 
     if (m_stickOperator.GetXButtonPressed()) {
       armRGoal = 0.02;
       armEGoal = 4500;
+      armPID.SetReference(90, rev::CANSparkMax::ControlType::kPosition);
 		}
 
     if (m_stickOperator.GetAButtonPressed()) {
       armRGoal = 0.01;
       armEGoal = 4000;
+      armPID.SetReference(180, rev::CANSparkMax::ControlType::kPosition);
 		}
 		//override, add deadband for xbox controller 
-		if (m_stickOperator.GetRightBumperPressed()) {
+		/*
+    if (m_stickOperator.GetRightBumperPressed()) {
 			armExtend.Set(ControlMode::PercentOutput, Deadband(leftYstick, 0.01));
 		}
+    */
     
-
-    
-
-
     //coast mode
     if (m_stickDrive.GetRawButton(5)){
      rightLeadmotor.SetIdleMode(rev::CANSparkMax::IdleMode::kCoast);
@@ -905,7 +915,6 @@ void AutonomousPeriodic() override {
 
 
   
-
 
   //start PID control
   //hi scarlette this is for the driver station thing 
@@ -929,11 +938,11 @@ void AutonomousPeriodic() override {
       kMinOutput = min; kMaxOutput = max;
   //end PID control
     
-    frc::SmartDashboard::PutNumber("SetPoint", rotations);
-    frc::SmartDashboard::PutNumber("ProcessVariable", armREncoder.GetPosition());
+    //frc::SmartDashboard::PutNumber("SetPoint", rotations);
+    //frc::SmartDashboard::PutNumber("ProcessVariable", armREncoder.GetPosition());
 
-    frc::SmartDashboard::PutBoolean("Forward Limit Switch", forwardLimit.Get());
-    frc::SmartDashboard::PutBoolean("Reverse Limit Switch", forwardLimit.Get());
+    //frc::SmartDashboard::PutBoolean("Forward Limit Switch", forwardLimit.Get());
+    //frc::SmartDashboard::PutBoolean("Reverse Limit Switch", forwardLimit.Get());
     //end spark max limit switch
 
  //bool motionDetected = ahrs->IsMoving();  //More code from the only example of navx code I could find, I am going crazy rn
@@ -954,6 +963,12 @@ void DisabledPeriodic() override {
   double displayauto = frc::SmartDashboard::GetNumber("Selected Auto", 0);
 
    frc::SmartDashboard::PutNumber("Auto Number Received:", displayauto);
+
+   double armRotaion = armREncoder.GetPosition();
+   frc::SmartDashboard::PutNumber("Arm Roatation Encoder", armRotaion);
+
+   double armExtention = armExtend.GetSelectedSensorPosition();
+   frc::SmartDashboard::PutNumber("Arm Extention Encoder", armExtention);
 
 }
 
