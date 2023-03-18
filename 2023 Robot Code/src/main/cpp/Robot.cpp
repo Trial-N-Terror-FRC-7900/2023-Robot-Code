@@ -122,6 +122,24 @@ frc::Timer timer;
 double armRGoal = 0;
 double armEGoal = 0;
 
+double maxForwardExtension = 65; // inches
+double maxRearExtension = 65; // inches
+
+double maxVertialExtensionDown = 34; // inches
+double maxVertialExtensionUp = ((6*12)+6)-maxVertialExtensionDown; //inches
+
+
+double TopRightCornerAngle = atan2(maxVertialExtensionUp, maxForwardExtension) * (180/3.141592);
+double BottomRightCornerAngle = atan2(-maxVertialExtensionDown, maxForwardExtension) * (180/3.141592);
+
+double TopLeftCornerAngle = atan2(maxVertialExtensionUp, -maxRearExtension) * (180/3.141592);
+double BottomLeftCornerAngle = atan2(-maxVertialExtensionDown, -maxRearExtension) * (180/3.141592);
+
+double maxArmExtension = 0;
+
+bool isFront = true;
+bool isStowed = true;
+
 
 std::string _sb;
 int kPIDLoopIdx;
@@ -163,7 +181,7 @@ AHRS *ahrs;
 
 
 
-  double kP = 0.1, kI = 1e-4, kD = 1, kIz = 0, kFF = 0, kMaxOutput = 1, kMinOutput = -1;
+  double kP = 0.045, kI = 1e-5, kD = 0.07, kIz = 0, kFF = 0, kMaxOutput = 1, kMinOutput = -1;
 
   //static const double kOffBalanceThresholdDegrees = 10.0f;  //More navx stuff, it's all red so have fun with that
 //static const double kOnBalanceThresholdDegrees = 5.0f
@@ -231,10 +249,12 @@ AHRS *ahrs;
     armRotate.SetSoftLimit(rev::CANSparkMax::SoftLimitDirection::kForward, 252);
 
     armREncoder.SetPositionConversionFactor(360); // converts to degrees instead of rotations
-    //armREncoder.GetInverted();
 
     armExtend.SetNeutralMode(NeutralMode::Brake);
 
+
+    handF.SetNeutralMode(NeutralMode::Brake);
+    handR.SetNeutralMode(NeutralMode::Brake);
     
 
 
@@ -811,22 +831,17 @@ void AutonomousPeriodic() override {
 //}
 //end pnuematics, when pressed it will either go up or go down, depending on current orientation 
 
+  double RightOperatorTrigger = Deadband(m_stickOperator.GetRightTriggerAxis(), 0.005);
+  double LeftOperatorTrigger = Deadband(m_stickOperator.GetLeftTriggerAxis(), 0.005);
 
-  if (m_stickOperator.GetLeftBumperPressed()){
-   handF.Set(0.5); // When pressed the intake turns on
+  if(fabs(RightOperatorTrigger) > fabs(LeftOperatorTrigger)){
+    handF.Set(RightOperatorTrigger);
+    handR.Set(RightOperatorTrigger);
   }
-
-   if (m_stickOperator.GetLeftBumperReleased()) {
-   handF.Set(0); 
-   } // When released the intake turns off
-
-   if(m_stickOperator.GetLeftBumperPressed()){
-    handR.Set(-0.5);
-   }
-
-   if(m_stickOperator.GetLeftBumperReleased()){
-    handR.Set(0);
-   }
+  else{
+    handF.Set(-LeftOperatorTrigger);
+    handR.Set(-LeftOperatorTrigger);
+  }
 
 
 
@@ -870,31 +885,65 @@ void AutonomousPeriodic() override {
     }
     */
 
-		double leftYstick = m_stickOperator.GetLeftY();
+    double armEposIN = armExtend.GetSelectedSensorPosition() * 10.61 * 3.14159 * (1+(0.063*floor(armExtend.GetSelectedSensorPosition()/2048)));
+
+    double MaxArmLengthXFront = maxForwardExtension/(cos((3.141592/180)*armRotaion));
+    double MaxArmLengthXRear = maxRearExtension/(cos((3.141592/180)*armRotaion));
+    double MaxArmLengthYTop = maxVertialExtensionUp/(sin((3.141592/180)*armRotaion));
+    double MaxArmLengthYBottom = maxVertialExtensionDown/(sin((3.141592/180)*armRotaion));
+
+    if(armRotaion < BottomRightCornerAngle){
+        maxArmExtension = MaxArmLengthYBottom; //# this should prevent it from hitting the floor or the chassis but not both. 
+    }
+    else if(armRotaion < TopRightCornerAngle){
+        maxArmExtension = MaxArmLengthXRear; //# this should prevent it from extending more than 4 feet past the end of the robot
+    }
+    else if(armRotaion < TopLeftCornerAngle){
+        maxArmExtension = MaxArmLengthYTop; //# this should prevent it from exceeding max height
+    }
+    else if(armRotaion < BottomLeftCornerAngle){
+        maxArmExtension = MaxArmLengthXFront; //# this should prevent it from extending more than 4 feet past the front of the robot
+    }
+    else{
+        maxArmExtension = MaxArmLengthYBottom; //# this should prevent it from hitting the floor or the chassis but not both. 
+    }
 	
 		//press button and it'll go where you want it to go
 		if (m_stickOperator.GetYButtonPressed()) {
-      armRGoal = 0.03;
+      armRGoal = 30;
       armEGoal = 5000;
       armPID.SetReference(30, rev::CANSparkMax::ControlType::kPosition);
 		}
 
     if (m_stickOperator.GetXButtonPressed()) {
-      armRGoal = 0.02;
+      armRGoal = 60;
       armEGoal = 4500;
-      armPID.SetReference(90, rev::CANSparkMax::ControlType::kPosition);
+      armPID.SetReference(60, rev::CANSparkMax::ControlType::kPosition);
 		}
 
     if (m_stickOperator.GetAButtonPressed()) {
-      armRGoal = 0.01;
+      armRGoal = 90;
       armEGoal = 4000;
-      armPID.SetReference(180, rev::CANSparkMax::ControlType::kPosition);
 		}
-		//override, add deadband for xbox controller 
-		/*
-    if (m_stickOperator.GetRightBumperPressed()) {
-			armExtend.Set(ControlMode::PercentOutput, Deadband(leftYstick, 0.01));
-		}
+    armExtend.Set(Deadband(m_stickOperator.GetLeftY(), 0.005));
+
+    /*
+    if(fabs(armRotaion - armRGoal) < 20){
+        // dont need to do a full retract for small moves
+        if(armEGoal > maxArmExtension){ //# if requested position is greater than the limits
+            armExtend.Set(ControlMode::Position, maxArmExtension); // just go to max extension for rotation
+        }
+        else{
+            armExtend.Set(ControlMode::Position, armEGoal); // otherwise go to requested position
+        }
+        armPID.SetReference(armRGoal, rev::CANSparkMax::ControlType::kPosition);
+    }
+    else{
+        armExtend.Set(ControlMode::Position, 0); //# fully retract arm to allow full rotation
+        if(armEposIN < 12){ //# if retracted to less than 1 foot rotate
+            armPID.SetReference(armRGoal, rev::CANSparkMax::ControlType::kPosition);
+        }
+    }
     */
     
     //coast mode
