@@ -4,10 +4,13 @@
 #include <frc/motorcontrol/PWMSparkMax.h>
 //#include <photonlib/PhotonUtils.h>
 #include "frc/smartdashboard/SmartDashboard.h"
+#include <frc/PowerDistribution.h>
 #include "ctre/Phoenix.h"
 #include "rev/CANSparkMax.h"
 #include <frc/Compressor.h>
 #include <frc/XboxController.h>
+#include "frc/DataLogManager.h"
+#include "frc/DriverStation.h"
 #include <iostream>
 #include <string>
 #include <math.h>
@@ -106,6 +109,8 @@ WPI_VictorSPX handF{13};
 WPI_VictorSPX handR{14}; 
 WPI_TalonFX armExtend{6};
 
+frc::PowerDistribution PDH{1, frc::PowerDistribution::ModuleType::kRev};
+
 frc::Timer timer;
 
  /*
@@ -139,7 +144,7 @@ double maxArmExtension = 0;
 
 bool isFront = true;
 bool isStowed = true;
-
+bool holdPiece = false;
 
 std::string _sb;
 int kPIDLoopIdx;
@@ -176,12 +181,9 @@ double boost = 0;
 
 AHRS *ahrs;
 
-    bool autoBalanceXMode; //Auto balance stuff (not sure what it does)
-    bool autoBalanceYMode;
 
 
-
-  double kP = 0.045, kI = 1e-5, kD = 0.07, kIz = 0, kFF = 0, kMaxOutput = 1, kMinOutput = -1;
+double kP = 0.045, kI = 1e-5, kD = 0.07, kIz = 0, kFF = 0, kMaxOutput = 1, kMinOutput = -1;
 
   //static const double kOffBalanceThresholdDegrees = 10.0f;  //More navx stuff, it's all red so have fun with that
 //static const double kOnBalanceThresholdDegrees = 5.0f
@@ -189,6 +191,7 @@ AHRS *ahrs;
 
  public: 
   void RobotInit() override {
+    // Factory Reset all Devices
     rightLeadmotor.RestoreFactoryDefaults();
     rightFollowmotor.RestoreFactoryDefaults();
     leftLeadmotor.RestoreFactoryDefaults();
@@ -198,7 +201,17 @@ AHRS *ahrs;
     // result in both sides moving forward. Depending on how your robot's
     // gearbox is constructed, you might have to invert the left side instead.
 
-    rightLeadmotor.SetInverted(true);
+    //armRotate.RestoreFactoryDefaults(); //NEED TO SETUP after encoder offset is in the code
+    armRotate2.RestoreFactoryDefaults();
+
+    armExtend.ConfigFactoryDefault();
+    handF.ConfigFactoryDefault();
+    handR.ConfigFactoryDefault();
+    
+    candle.ConfigFactoryDefault();
+    PDH.ResetTotalEnergy();
+
+    rightLeadmotor.SetInverted(true); // Inverts one side of the drive train
 
 
     //PID start
@@ -249,6 +262,7 @@ AHRS *ahrs;
     armRotate.SetSoftLimit(rev::CANSparkMax::SoftLimitDirection::kForward, 252);
 
     armREncoder.SetPositionConversionFactor(360); // converts to degrees instead of rotations
+    //armREncoder.SetZeroOffset(15); //NEED TO SETUP
 
     armExtend.SetNeutralMode(NeutralMode::Brake);
 
@@ -266,10 +280,6 @@ AHRS *ahrs;
 	  bool _lastButton1 = false;
 	  /** save the target position to servo to */
 	  double targetPositionRotations;
-
-    /* Factory Default all hardware to prevent unexpected behaviour */
-		armExtend.ConfigFactoryDefault();
-
 
     /**
 		 * Grab the 360 degree position of the MagEncoder's absolute
@@ -297,64 +307,109 @@ AHRS *ahrs;
 
     CANdleConfiguration config;
 
-  config.stripType = LEDStripType::RGB;
+    config.stripType = LEDStripType::RGB;
 
-  config.brightnessScalar = 0.5; 
+    config.brightnessScalar = 0.5; 
 
-  candle.ConfigAllSettings(config);
+    candle.ConfigAllSettings(config);
   
-  RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
-  candle.Animate(*rainbowAnim);
+    RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
+    candle.Animate(*rainbowAnim);
 
-  //candle.SetLEDs(225, 225, 225);
-  //virtual  Animation(1, 0.5, 64);
-
-
-// product-specific voltage->pressure conversion, see product manual
-// in this case, 250(V/5)-25
-// the scale parameter in the AnalogPotentiometer constructor is scaled from 1 instead of 5,
-// so if r is the raw AnalogPotentiometer output, the pressure is 250r-25
-
-
-
-// scaled values in psi units
-//double psi = pressureTransducer.Get();
-
-    try
-  {
+    try{
     /***********************************************************************
      * navX-MXP:
      * - Communication via RoboRIO MXP (SPI, I2C) and USB.            
      * - See http://navx-mxp.kauailabs.com/guidance/selecting-an-interface.
-     * 
-     * navX-Micro:
-     * - Communication via I2C (RoboRIO MXP or Onboard) and USB.
-     * - See http://navx-micro.kauailabs.com/guidance/selecting-an-interface.
-     * 
-     * VMX-pi:
-     * - Communication via USB.
-     * - See https://vmx-pi.kauailabs.com/installation/roborio-installation/
-     * 
-     * Multiple navX-model devices on a single robot are supported.
-     ************************************************************************/
-    ahrs = new AHRS(frc::SPI::Port::kMXP);
-  }
-  catch (std::exception &ex)
-  {
-    std::string what_string = ex.what();
-    std::string err_msg("Error instantiating navX MXP:  " + what_string);
-    const char * p_err_msg = err_msg.c_str();
-  }
-        autoBalanceXMode = false; //auto balance stuff
-        autoBalanceYMode = false;
+    */
+      ahrs = new AHRS(frc::SPI::Port::kMXP);
+    }
+    catch (std::exception &ex){
+      std::string what_string = ex.what();
+      std::string err_msg("Error instantiating navX MXP:  " + what_string);
+      const char * p_err_msg = err_msg.c_str();
+    }
 
-
-
-   // ahrs = new AHRS(SPI::Port::kMXP);  //I have no clue what any of this does, it was the only example code I could find. 
-    //AHRS *ahrs; 
-
+    frc::DataLogManager::Start(); // Start Logging the Robot Data
+    // Record both DS control and joystick data
+    frc::DriverStation::StartDataLog(frc::DataLogManager::GetLog());
 
   };
+
+  void LogData(){
+    double displayauto = frc::SmartDashboard::GetNumber("Selected Auto", 0);
+    frc::SmartDashboard::PutNumber("Auto Number Received:", displayauto);
+
+    frc::SmartDashboard::PutNumber("Nav X Yaw", ahrs->GetAngle());
+    frc::SmartDashboard::PutNumber("Nav X Roll", ahrs->GetRoll());
+    frc::SmartDashboard::PutNumber("Nav X Pitch", ahrs->GetPitch());
+    frc::SmartDashboard::PutNumber("Nav X Raw Accel X", ahrs->GetRawAccelX());
+    frc::SmartDashboard::PutNumber("Nav X Raw Accel Y", ahrs->GetRawAccelY());
+    frc::SmartDashboard::PutNumber("Nav X Raw Accel Z", ahrs->GetRawAccelZ());
+    frc::SmartDashboard::PutNumber("Nav X World Linear Accel X", ahrs->GetWorldLinearAccelX());
+    frc::SmartDashboard::PutNumber("Nav X World Linear Accel Y", ahrs->GetWorldLinearAccelY());
+    frc::SmartDashboard::PutNumber("Nav X World Linear Accel Z", ahrs->GetWorldLinearAccelZ());
+    
+    frc::SmartDashboard::PutNumber("PDH Temperature (C)", PDH.GetTemperature());
+    frc::SmartDashboard::PutNumber("PDH Total Energy", PDH.GetTotalEnergy());
+    frc::SmartDashboard::PutNumber("PDH Total Current", PDH.GetTotalCurrent());
+    frc::SmartDashboard::PutNumber("PDH Battery Voltage", PDH.GetVoltage());
+
+    frc::SmartDashboard::PutNumber("Right Lead Drive Motor Bus Voltage", rightLeadmotor.GetBusVoltage());
+    frc::SmartDashboard::PutNumber("Right Lead Drive Motor Output Current", rightLeadmotor.GetOutputCurrent());
+    frc::SmartDashboard::PutNumber("Right Lead Drive Motor Temp", rightLeadmotor.GetMotorTemperature());
+    frc::SmartDashboard::PutNumber("Right Lead Drive Applied Output", rightLeadmotor.GetAppliedOutput());
+
+    frc::SmartDashboard::PutNumber("Left Follow Drive Motor Bus Voltage", rightFollowmotor.GetBusVoltage());
+    frc::SmartDashboard::PutNumber("Left Follow Drive Motor Output Current", rightFollowmotor.GetOutputCurrent());
+    frc::SmartDashboard::PutNumber("Left Follow Drive Motor Temp", rightFollowmotor.GetMotorTemperature());
+    frc::SmartDashboard::PutNumber("Left Follow Drive Applied Output", rightFollowmotor.GetAppliedOutput());
+
+    frc::SmartDashboard::PutNumber("Left Lead Drive Motor Bus Voltage", leftLeadmotor.GetBusVoltage());
+    frc::SmartDashboard::PutNumber("Left Lead Drive Motor Output Current", leftLeadmotor.GetOutputCurrent());
+    frc::SmartDashboard::PutNumber("Left Lead Drive Motor Temp", leftLeadmotor.GetMotorTemperature());
+    frc::SmartDashboard::PutNumber("Left Lead Drive Applied Output", leftLeadmotor.GetAppliedOutput());
+
+    frc::SmartDashboard::PutNumber("Left Follow Drive Motor Bus Voltage", leftFollowmotor.GetBusVoltage());
+    frc::SmartDashboard::PutNumber("Left Follow Drive Motor Output Current", leftFollowmotor.GetOutputCurrent());
+    frc::SmartDashboard::PutNumber("Left Follow Drive Motor Temp", leftFollowmotor.GetMotorTemperature());
+    frc::SmartDashboard::PutNumber("Left Follow Drive Applied Output", leftFollowmotor.GetAppliedOutput());
+
+    double armRotaion = armREncoder.GetPosition();
+    frc::SmartDashboard::PutNumber("Arm Rotation Encoder", armRotaion);
+    frc::SmartDashboard::PutNumber("Arm Rotate Applied Output", armRotate.GetAppliedOutput());
+    frc::SmartDashboard::PutNumber("Arm Rotate Bus Voltage", armRotate.GetBusVoltage());
+    frc::SmartDashboard::PutNumber("Arm Rotate Output Current", armRotate.GetOutputCurrent());
+    frc::SmartDashboard::PutNumber("Arm Rotate Temp", armRotate.GetMotorTemperature());
+
+    frc::SmartDashboard::PutNumber("Arm Rotate2 Applied Output", armRotate2.GetAppliedOutput());
+    frc::SmartDashboard::PutNumber("Arm Rotate2 Bus Voltage", armRotate2.GetBusVoltage());
+    frc::SmartDashboard::PutNumber("Arm Rotate2 Output Current", armRotate2.GetOutputCurrent());
+    frc::SmartDashboard::PutNumber("Arm Rotate2 Temp", armRotate2.GetMotorTemperature());
+
+    frc::SmartDashboard::PutNumber("HandF Bus Voltage", handF.GetBusVoltage());
+    handF.GetTemperature();
+    // Victor SPX does not support reading current
+    PDH.GetCurrent(16); // FIX CHANNEL OF PDH 
+    handF.GetMotorOutputVoltage();
+
+    handR.GetBusVoltage();
+    handR.GetTemperature();
+    // Victor SPX does not support reading current
+    PDH.GetCurrent(15); // FIX CHANNEL OF PDH
+    handR.GetMotorOutputVoltage();
+
+    double armExtention = armExtend.GetSelectedSensorPosition();
+    frc::SmartDashboard::PutNumber("Arm Extention Encoder", armExtention);
+    frc::SmartDashboard::PutNumber("Arm Extention Bus Voltage", armExtend.GetBusVoltage());
+    frc::SmartDashboard::PutNumber("Arm Extention Output Voltage", armExtend.GetMotorOutputVoltage());
+    frc::SmartDashboard::PutNumber("Arm Extention Temp", armExtend.GetTemperature());
+    frc::SmartDashboard::PutNumber("Arm Extention Output Current", armExtend.GetStatorCurrent());
+
+    frc::SmartDashboard::PutNumber("CANdle Curret", candle.GetCurrent());
+    frc::SmartDashboard::PutNumber("CANdle Temp", candle.GetTemperature());
+    frc::SmartDashboard::PutNumber("CANdle Temp", candle.GetBusVoltage());
+  }
 
   // Auto Area
   void AutonomousInit() override {
@@ -364,12 +419,6 @@ AHRS *ahrs;
   rightEncoder.SetPosition(0);
   leftEncoder.SetPosition(0);
   ahrs->Reset();
-  //ahrs->Reset(); <-crashes the code?
-
-
- // drivedistance = (drivedistance * 12)/(6 * 3.141592635) * (34/18) * (62/12) * (42); 
- // drivedistance2 = (drivedistance2 * 12)/(6 * 3.141592635) * (34/18) * (62/12) * (42); 
- // drivedistance = (drivedistance3 * 12)/(6 * 3.141592635) * (34/18) * (62/12) * (42); 
 
 
   SelectedAuto = frc::SmartDashboard::GetNumber("Selected Auto", 0);
@@ -392,11 +441,9 @@ AHRS *ahrs;
 void AutonomousPeriodic() override {
  //  RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
  // candle.Animate(*rainbowAnim);
-  frc::SmartDashboard::PutNumber("Nav X Yaw", ahrs->GetAngle());
-  frc::SmartDashboard::PutNumber("Nav X Roll", ahrs->GetRoll());
-  frc::SmartDashboard::PutNumber("Nav X Pitch", ahrs->GetPitch());
+  LogData();
 
-  if(SelectedAuto == 1){  //just driving 10ft, with autobalance?
+  if(SelectedAuto == 1){  //just driving 10ft
 
     frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
     if(rightEncoder.GetPosition() < 10.0){ 
@@ -776,13 +823,10 @@ void AutonomousPeriodic() override {
 
   }
 
-  void TeleopPeriodic() override {
-    //double StickX = Deadband(-m_stick.GetX(), 0.05, 2);
-    //double StickY = Deadband(-m_stick.GetY(), 0.05, 2); 
+  void TeleopPeriodic() override { 
+    LogData();
 
-    //frc::SmartDashboard::PutNumber("Robot Pitch", ahrs->GetRoll());
-     if(m_stickDrive.GetRawButton(4)){ 
-      //frc::SmartDashboard::PutNumber("Robot Pitch", ahrs->GetRoll());
+    if(m_stickDrive.GetRawButton(4)){ 
       m_robotDrive.ArcadeDrive(-0.025*(ahrs->GetRoll()), 0);
     }
     else{
@@ -834,13 +878,27 @@ void AutonomousPeriodic() override {
   double RightOperatorTrigger = Deadband(m_stickOperator.GetRightTriggerAxis(), 0.005);
   double LeftOperatorTrigger = Deadband(m_stickOperator.GetLeftTriggerAxis(), 0.005);
 
-  if(fabs(RightOperatorTrigger) > fabs(LeftOperatorTrigger)){
+  if(fabs(RightOperatorTrigger) > 0.005){
     handF.Set(RightOperatorTrigger);
     handR.Set(RightOperatorTrigger);
   }
-  else{
+  else if(fabs(LeftOperatorTrigger) > 0.005){
     handF.Set(-LeftOperatorTrigger);
     handR.Set(-LeftOperatorTrigger);
+  }
+  else{ // Hold the piece by applying 2 volts
+    if(holdPiece){ // Holds the piece at a voltage compinsated 2 Volts
+      handF.Set(2*(handF.GetBusVoltage()/12));
+      handR.Set(2*(handR.GetBusVoltage()/12));
+    }
+    else{
+      handF.Set(0);
+      handR.Set(0);
+    }
+  }
+
+  if(m_stickOperator.GetAButtonPressed()){
+    holdPiece = !holdPiece;
   }
 
 
@@ -1009,15 +1067,7 @@ void DisabledPeriodic() override {
    frc::SmartDashboard::PutNumber("Nav X Roll", ahrs->GetRoll());
    frc::SmartDashboard::PutNumber("Nav X Pitch", ahrs->GetPitch());
 
-  double displayauto = frc::SmartDashboard::GetNumber("Selected Auto", 0);
 
-   frc::SmartDashboard::PutNumber("Auto Number Received:", displayauto);
-
-   double armRotaion = armREncoder.GetPosition();
-   frc::SmartDashboard::PutNumber("Arm Roatation Encoder", armRotaion);
-
-   double armExtention = armExtend.GetSelectedSensorPosition();
-   frc::SmartDashboard::PutNumber("Arm Extention Encoder", armExtention);
 
 }
 
