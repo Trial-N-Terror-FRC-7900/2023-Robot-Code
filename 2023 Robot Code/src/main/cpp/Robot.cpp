@@ -388,16 +388,16 @@ double kP = 0.045, kI = 1e-5, kD = 0.07, kIz = 0, kFF = 0, kMaxOutput = 1, kMinO
     frc::SmartDashboard::PutNumber("Arm Rotate2 Temp", armRotate2.GetMotorTemperature());
 
     frc::SmartDashboard::PutNumber("HandF Bus Voltage", handF.GetBusVoltage());
-    handF.GetTemperature();
+    frc::SmartDashboard::PutNumber("HandF Temp", handF.GetTemperature());
     // Victor SPX does not support reading current
-    PDH.GetCurrent(16); // FIX CHANNEL OF PDH 
-    handF.GetMotorOutputVoltage();
+    frc::SmartDashboard::PutNumber("HandF Current", PDH.GetCurrent(16)); // FIX CHANNEL OF PDH 
+    frc::SmartDashboard::PutNumber("HandF Applied Output", handF.GetMotorOutputVoltage());
 
-    handR.GetBusVoltage();
-    handR.GetTemperature();
+    frc::SmartDashboard::PutNumber("HandR Bus Voltage", handR.GetBusVoltage());
+    frc::SmartDashboard::PutNumber("HandR Temp", handR.GetTemperature());
     // Victor SPX does not support reading current
-    PDH.GetCurrent(15); // FIX CHANNEL OF PDH
-    handR.GetMotorOutputVoltage();
+    frc::SmartDashboard::PutNumber("HandR Current", PDH.GetCurrent(15)); // FIX CHANNEL OF PDH
+    frc::SmartDashboard::PutNumber("HandR Applied Output", handR.GetMotorOutputVoltage());
 
     double armExtention = armExtend.GetSelectedSensorPosition();
     frc::SmartDashboard::PutNumber("Arm Extention Encoder", armExtention);
