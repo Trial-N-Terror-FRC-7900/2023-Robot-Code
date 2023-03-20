@@ -987,6 +987,18 @@ void AutonomousPeriodic() override {
 		}
     armExtend.Set(Deadband(m_stickOperator.GetLeftY(), 0.005));
 
+    if (m_stickOperator.GetPOV(0)) {
+      armRGoal = -30;
+      armEGoal = -5000;
+      armPID.SetReference(30, rev::CANSparkMax::ControlType::kPosition);
+		}
+
+    if (m_stickOperator.GetPOV(180)) {
+      armRGoal = -60;
+      armEGoal = -4500;
+      armPID.SetReference(60, rev::CANSparkMax::ControlType::kPosition);
+		}
+
     /*
     if(fabs(armRotaion - armRGoal) < 20){
         // dont need to do a full retract for small moves
