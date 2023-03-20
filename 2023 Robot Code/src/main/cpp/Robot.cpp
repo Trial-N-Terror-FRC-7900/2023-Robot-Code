@@ -147,9 +147,7 @@ bool isStowed = true;
 bool holdPiece = false;
 
 std::string _sb;
-int kPIDLoopIdx;
-bool kTimeoutMs;
-int targetPositionRotations;
+int kPIDLoopIdx = 0;
 
 int _loops = 0;
 bool _lastButton1 = false;
@@ -205,6 +203,10 @@ double kP = 0.045, kI = 1e-5, kD = 0.07, kIz = 0, kFF = 0, kMaxOutput = 1, kMinO
     armRotate2.RestoreFactoryDefaults();
 
     armExtend.ConfigFactoryDefault();
+    armExtend.ConfigSelectedFeedbackSensor(ctre::phoenix::motorcontrol::FeedbackDevice::IntegratedSensor, 0);
+    armExtend.ConfigReverseLimitSwitchSource(ctre::phoenix::motorcontrol::LimitSwitchSource::LimitSwitchSource_FeedbackConnector, ctre::phoenix::motorcontrol::LimitSwitchNormal::LimitSwitchNormal_NormallyOpen);
+    armExtend.ConfigForwardLimitSwitchSource(ctre::phoenix::motorcontrol::LimitSwitchSource::LimitSwitchSource_FeedbackConnector, ctre::phoenix::motorcontrol::LimitSwitchNormal::LimitSwitchNormal_Disabled);
+
     handF.ConfigFactoryDefault();
     handR.ConfigFactoryDefault();
     
@@ -285,25 +287,25 @@ double kP = 0.045, kI = 1e-5, kD = 0.07, kIz = 0, kFF = 0, kMaxOutput = 1, kMinO
 		 * Grab the 360 degree position of the MagEncoder's absolute
 		 * position, and intitally set the relative sensor to match.
 		 */
-		int absolutePosition = armExtend.GetSensorCollection().GetIntegratedSensorAbsolutePosition();
+		//int absolutePosition = armExtend.GetSensorCollection().GetIntegratedSensorAbsolutePosition();
 		/* use the low level API to set the quad encoder signal */
-		armExtend.SetSelectedSensorPosition(absolutePosition, kPIDLoopIdx, kTimeoutMs);
+		//armExtend.SetSelectedSensorPosition(absolutePosition, kPIDLoopIdx, kTimeoutMs);
 
 		/* choose the sensor and sensor direction */
-		armExtend.ConfigSelectedFeedbackSensor(FeedbackDevice::CTRE_MagEncoder_Relative, kPIDLoopIdx,kTimeoutMs);
-		armExtend.SetSensorPhase(true);
+		//armExtend.ConfigSelectedFeedbackSensor(FeedbackDevice::CTRE_MagEncoder_Relative, kPIDLoopIdx,kTimeoutMs);
+		//armExtend.SetSensorPhase(true);
 
 		/* set the peak and nominal outputs, 12V means full */
-		armExtend.ConfigNominalOutputForward(0, kTimeoutMs);
-		armExtend.ConfigNominalOutputReverse(0, kTimeoutMs);
-		armExtend.ConfigPeakOutputForward(1, kTimeoutMs);
-		armExtend.ConfigPeakOutputReverse(-1, kTimeoutMs);
+		armExtend.ConfigNominalOutputForward(0);
+		armExtend.ConfigNominalOutputReverse(0);
+		armExtend.ConfigPeakOutputForward(1);
+		armExtend.ConfigPeakOutputReverse(-1);
 
 		/* set closed loop gains in slot0 */
-		armExtend.Config_kF(kPIDLoopIdx, 0.0, kTimeoutMs);
-		armExtend.Config_kP(kPIDLoopIdx, 0.1, kTimeoutMs);
-		armExtend.Config_kI(kPIDLoopIdx, 0.0, kTimeoutMs);
-		armExtend.Config_kD(kPIDLoopIdx, 0.0, kTimeoutMs);
+		armExtend.Config_kF(kPIDLoopIdx, 0.0);
+		armExtend.Config_kP(kPIDLoopIdx, 0.1);
+		armExtend.Config_kI(kPIDLoopIdx, 0.0);
+		armExtend.Config_kD(kPIDLoopIdx, 0.0);
 
     CANdleConfiguration config;
 
@@ -965,7 +967,7 @@ void AutonomousPeriodic() override {
     else{
         maxArmExtension = MaxArmLengthYBottom; //# this should prevent it from hitting the floor or the chassis but not both. 
     }
-	
+
 		//press button and it'll go where you want it to go
 		if (m_stickOperator.GetYButtonPressed()) {
       armRGoal = 30;
