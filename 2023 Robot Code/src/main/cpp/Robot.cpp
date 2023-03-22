@@ -146,6 +146,8 @@ bool isFront = true;
 bool isStowed = true;
 bool holdPiece = false;
 
+bool ArmZeroed = false;
+
 std::string _sb;
 int kPIDLoopIdx = 0;
 
@@ -179,6 +181,7 @@ double boost = 0;
 
 AHRS *ahrs;
 
+RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 128);
 
 
 double kP = 0.045, kI = 1e-5, kD = 0.07, kIz = 0, kFF = 0, kMaxOutput = 1, kMinOutput = -1;
@@ -298,14 +301,21 @@ double kP = 0.045, kI = 1e-5, kD = 0.07, kIz = 0, kFF = 0, kMaxOutput = 1, kMinO
 		/* set the peak and nominal outputs, 12V means full */
 		armExtend.ConfigNominalOutputForward(0);
 		armExtend.ConfigNominalOutputReverse(0);
-		armExtend.ConfigPeakOutputForward(1);
-		armExtend.ConfigPeakOutputReverse(-1);
+		armExtend.ConfigPeakOutputForward(0.25);
+		armExtend.ConfigPeakOutputReverse(-0.5);
 
 		/* set closed loop gains in slot0 */
 		armExtend.Config_kF(kPIDLoopIdx, 0.0);
-		armExtend.Config_kP(kPIDLoopIdx, 0.1);
-		armExtend.Config_kI(kPIDLoopIdx, 0.0);
-		armExtend.Config_kD(kPIDLoopIdx, 0.0);
+		armExtend.Config_kP(kPIDLoopIdx, 1);
+		armExtend.Config_kI(kPIDLoopIdx, 0);
+		armExtend.Config_kD(kPIDLoopIdx, 0);
+    armExtend.ConfigAllowableClosedloopError(0, 100);
+
+    armExtend.SetStatusFramePeriod(StatusFrameEnhanced::Status_13_Base_PIDF0, 10, 10);
+    armExtend.SetStatusFramePeriod(StatusFrameEnhanced::Status_10_MotionMagic, 10, 10);
+
+    armExtend.ConfigMotionCruiseVelocity(15, 10);
+    armExtend.ConfigMotionAcceleration(15, 10);
 
     CANdleConfiguration config;
 
@@ -315,7 +325,7 @@ double kP = 0.045, kI = 1e-5, kD = 0.07, kIz = 0, kFF = 0, kMaxOutput = 1, kMinO
 
     candle.ConfigAllSettings(config);
   
-    RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
+
     candle.Animate(*rainbowAnim);
 
     try{
@@ -390,13 +400,13 @@ double kP = 0.045, kI = 1e-5, kD = 0.07, kIz = 0, kFF = 0, kMaxOutput = 1, kMinO
     frc::SmartDashboard::PutNumber("Arm Rotate2 Temp", armRotate2.GetMotorTemperature());
 
     frc::SmartDashboard::PutNumber("HandF Bus Voltage", handF.GetBusVoltage());
-    frc::SmartDashboard::PutNumber("HandF Temp", handF.GetTemperature());
+    //frc::SmartDashboard::PutNumber("HandF Temp", handF.GetTemperature());
     // Victor SPX does not support reading current
     frc::SmartDashboard::PutNumber("HandF Current", PDH.GetCurrent(16)); // FIX CHANNEL OF PDH 
     frc::SmartDashboard::PutNumber("HandF Applied Output", handF.GetMotorOutputVoltage());
 
     frc::SmartDashboard::PutNumber("HandR Bus Voltage", handR.GetBusVoltage());
-    frc::SmartDashboard::PutNumber("HandR Temp", handR.GetTemperature());
+    //frc::SmartDashboard::PutNumber("HandR Temp", handR.GetTemperature());
     // Victor SPX does not support reading current
     frc::SmartDashboard::PutNumber("HandR Current", PDH.GetCurrent(15)); // FIX CHANNEL OF PDH
     frc::SmartDashboard::PutNumber("HandR Applied Output", handR.GetMotorOutputVoltage());
@@ -410,7 +420,7 @@ double kP = 0.045, kI = 1e-5, kD = 0.07, kIz = 0, kFF = 0, kMaxOutput = 1, kMinO
 
     frc::SmartDashboard::PutNumber("CANdle Curret", candle.GetCurrent());
     frc::SmartDashboard::PutNumber("CANdle Temp", candle.GetTemperature());
-    frc::SmartDashboard::PutNumber("CANdle Temp", candle.GetBusVoltage());
+    frc::SmartDashboard::PutNumber("CANdle Bus Voltage", candle.GetBusVoltage());
   }
 
   // Auto Area
@@ -438,11 +448,32 @@ double kP = 0.045, kI = 1e-5, kD = 0.07, kIz = 0, kFF = 0, kMaxOutput = 1, kMinO
   }
   //RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
   //candle.Animate(*rainbowAnim);
+  if(ArmZeroed == false){
+    armExtend.Set(ControlMode::PercentOutput, -0.05);
+  }
+  else{
+    armExtend.Set(ControlMode::MotionMagic, 0);
+  }
 }
 
 void AutonomousPeriodic() override {
- //  RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
- // candle.Animate(*rainbowAnim);
+
+  if(ArmZeroed == false){
+    if(armExtend.GetControlMode() == ControlMode::PercentOutput){
+      if(armExtend.GetSensorCollection().IsRevLimitSwitchClosed() == 1){
+        armExtend.SetSelectedSensorPosition(0,0,0);
+        ArmZeroed = true;
+        armExtend.Set(ControlMode::Position, 0);
+
+      }
+    }
+  }
+
+  if(armExtend.GetSensorCollection().IsRevLimitSwitchClosed() == 1){
+    armExtend.SetSelectedSensorPosition(0,0,0);
+    ArmZeroed = true;
+  }
+
   LogData();
 
   if(SelectedAuto == 1){  //just driving 10ft
@@ -820,9 +851,12 @@ void AutonomousPeriodic() override {
 
   // Teleop Area
   void TeleopInit() override {
-
-    
-
+      if(ArmZeroed == false){
+        armExtend.Set(ControlMode::PercentOutput, -0.3);
+      }
+      else{
+        armExtend.Set(ControlMode::Position, 0);
+      }
   }
 
   void TeleopPeriodic() override { 
@@ -889,9 +923,10 @@ void AutonomousPeriodic() override {
     handR.Set(-LeftOperatorTrigger);
   }
   else{ // Hold the piece by applying 2 volts
-    if(holdPiece){ // Holds the piece at a voltage compinsated 2 Volts
-      handF.Set(2*(handF.GetBusVoltage()/12));
-      handR.Set(2*(handR.GetBusVoltage()/12));
+    frc::SmartDashboard::PutBoolean("Hold", holdPiece);
+    if(holdPiece == true){ // Holds the piece at a voltage compinsated 2 Volts
+      handF.Set(0.2);
+      handR.Set(0.2);
     }
     else{
       handF.Set(0);
@@ -899,7 +934,7 @@ void AutonomousPeriodic() override {
     }
   }
 
-  if(m_stickOperator.GetAButtonPressed()){
+  if(m_stickOperator.GetBButtonPressed()){
     holdPiece = !holdPiece;
   }
 
@@ -909,7 +944,6 @@ void AutonomousPeriodic() override {
       candle.ClearAnimation(0);
    }
    if(m_stickDrive.GetRawButtonPressed(8)){
-      RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
         candle.Animate(*rainbowAnim);
         frc::SmartDashboard::PutNumber("candle", 2);
   }
@@ -926,10 +960,10 @@ void AutonomousPeriodic() override {
    }
 
     double armRotaion = armREncoder.GetPosition();
-    frc::SmartDashboard::PutNumber("Arm Roatation Encoder", armRotaion);
+    //frc::SmartDashboard::PutNumber("Arm Roatation Encoder", armRotaion);
 
     double armExtention = armExtend.GetSelectedSensorPosition();
-    frc::SmartDashboard::PutNumber("Arm Extention Encoder", armExtention);
+    //frc::SmartDashboard::PutNumber("Arm Extention Encoder", armExtention);
 
     /*
     if(fabs(armRotaion - armRGoal) > 30/360){ //roataion in rotaions lol not degree bUT I CAN DIVIDE
@@ -944,6 +978,21 @@ void AutonomousPeriodic() override {
        armExtend.Set(ControlMode::Position, armEGoal);
     }
     */
+    frc::SmartDashboard::PutNumber("ArmExtend Reverse Limit Switch", armExtend.GetSensorCollection().IsRevLimitSwitchClosed());
+    if(ArmZeroed == false){
+      if(armExtend.GetControlMode() == ControlMode::PercentOutput){
+        if(armExtend.GetSensorCollection().IsRevLimitSwitchClosed() == 1){
+          armExtend.SetSelectedSensorPosition(0,0,0);
+          ArmZeroed = true;
+          armExtend.Set(ControlMode::Position, 0);
+
+        }
+      }
+    }
+    if(armExtend.GetSensorCollection().IsRevLimitSwitchClosed() == 1){
+      armExtend.SetSelectedSensorPosition(0,0,0);
+      ArmZeroed = true;
+    }
 
     double armEposIN = armExtend.GetSelectedSensorPosition() * 10.61 * 3.14159 * (1+(0.063*floor(armExtend.GetSelectedSensorPosition()/2048)));
 
@@ -972,21 +1021,23 @@ void AutonomousPeriodic() override {
 		if (m_stickOperator.GetYButtonPressed()) {
       armRGoal = 30;
       armEGoal = 5000;
-      armPID.SetReference(30, rev::CANSparkMax::ControlType::kPosition);
+      //armPID.SetReference(30, rev::CANSparkMax::ControlType::kPosition);
+      armPID.SetReference(60, rev::CANSparkMax::ControlType::kPosition);
 		}
 
     if (m_stickOperator.GetXButtonPressed()) {
       armRGoal = 60;
       armEGoal = 4500;
-      armPID.SetReference(60, rev::CANSparkMax::ControlType::kPosition);
+      //armPID.SetReference(60, rev::CANSparkMax::ControlType::kPosition);
+      armExtend.Set(ControlMode::Position, 50000);
 		}
 
     if (m_stickOperator.GetAButtonPressed()) {
       armRGoal = 90;
       armEGoal = 4000;
+      armExtend.Set(ControlMode::Position, 100000);
 		}
-    armExtend.Set(Deadband(m_stickOperator.GetLeftY(), 0.005));
-
+    
     if (m_stickOperator.GetPOV(0)) {
       armRGoal = -30;
       armEGoal = -5000;
@@ -998,8 +1049,14 @@ void AutonomousPeriodic() override {
       armEGoal = -4500;
       armPID.SetReference(60, rev::CANSparkMax::ControlType::kPosition);
 		}
+    
+    armExtend.Set(ControlMode::Position, armEGoal+(10*Deadband(-m_stickOperator.GetLeftY(), 0.005)));
 
-    /*
+    double countsforgoal = armEGoal/(3.14159*(2-0.05*(floor(armExtend.GetSelectedSensorPosition()/(10.61*2048)))));
+
+    double countsforMax = maxArmExtension/(3.14159*(2-0.05*(floor(armExtend.GetSelectedSensorPosition()/(10.61*2048)))));
+
+    
     if(fabs(armRotaion - armRGoal) < 20){
         // dont need to do a full retract for small moves
         if(armEGoal > maxArmExtension){ //# if requested position is greater than the limits
@@ -1016,7 +1073,6 @@ void AutonomousPeriodic() override {
             armPID.SetReference(armRGoal, rev::CANSparkMax::ControlType::kPosition);
         }
     }
-    */
     
     //coast mode
     if (m_stickDrive.GetRawButton(5)){
@@ -1088,9 +1144,6 @@ void DisabledPeriodic() override {
 
  
 };  
-
-    // Drive with arcade style
-    //m_robotDrive.ArcadeDrive(StickY, StickX);
   
 
 
