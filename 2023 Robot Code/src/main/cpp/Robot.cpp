@@ -147,6 +147,7 @@ bool isStowed = true;
 bool holdPiece = false;
 
 bool ArmZeroed = false;
+bool joystickadjust = false;
 
 std::string _sb;
 int kPIDLoopIdx = 0;
@@ -179,6 +180,9 @@ int autoStep = 0;
 int loopCount = 0;
 double boost = 0;
 
+bool buttonpressed = false;
+bool bypassZeroed = false;
+
 AHRS *ahrs;
 
 RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 128);
@@ -202,7 +206,7 @@ double kP = 0.045, kI = 1e-5, kD = 0.07, kIz = 0, kFF = 0, kMaxOutput = 1, kMinO
     // result in both sides moving forward. Depending on how your robot's
     // gearbox is constructed, you might have to invert the left side instead.
 
-    //armRotate.RestoreFactoryDefaults(); //NEED TO SETUP after encoder offset is in the code
+    armRotate.RestoreFactoryDefaults(); //NEED TO SETUP after encoder offset is in the code
     armRotate2.RestoreFactoryDefaults();
 
     armExtend.ConfigFactoryDefault();
@@ -267,7 +271,7 @@ double kP = 0.045, kI = 1e-5, kD = 0.07, kIz = 0, kFF = 0, kMaxOutput = 1, kMinO
     armRotate.SetSoftLimit(rev::CANSparkMax::SoftLimitDirection::kForward, 252);
 
     armREncoder.SetPositionConversionFactor(360); // converts to degrees instead of rotations
-    //armREncoder.SetZeroOffset(15); //NEED TO SETUP
+    armREncoder.SetZeroOffset(235);
 
     armExtend.SetNeutralMode(NeutralMode::Brake);
 
@@ -285,6 +289,7 @@ double kP = 0.045, kI = 1e-5, kD = 0.07, kIz = 0, kFF = 0, kMaxOutput = 1, kMinO
 	  bool _lastButton1 = false;
 	  /** save the target position to servo to */
 	  double targetPositionRotations;
+
 
     /**
 		 * Grab the 360 degree position of the MagEncoder's absolute
@@ -449,10 +454,14 @@ double kP = 0.045, kI = 1e-5, kD = 0.07, kIz = 0, kFF = 0, kMaxOutput = 1, kMinO
   //RainbowAnimation *rainbowAnim = new RainbowAnimation(1, 0.5, 64);
   //candle.Animate(*rainbowAnim);
   if(ArmZeroed == false){
-    armExtend.Set(ControlMode::PercentOutput, -0.05);
+    armExtend.Set(ControlMode::PercentOutput, -0.35);
   }
   else{
     armExtend.Set(ControlMode::MotionMagic, 0);
+  }
+
+  if(SelectedAuto == 8){
+    timer.Start();
   }
 }
 
@@ -478,12 +487,39 @@ void AutonomousPeriodic() override {
 
   if(SelectedAuto == 1){  //just driving 10ft
 
-    frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
-    if(rightEncoder.GetPosition() < 10.0){ 
-      m_robotDrive.ArcadeDrive(0.4, 0); 
+    if(autoStep == 0){
+      frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
+      if(rightEncoder.GetPosition() < 13.0){ 
+        m_robotDrive.ArcadeDrive(0.4, 0); 
+      }
+      else{
+        timer.Start();
+        m_robotDrive.ArcadeDrive(0, 0); 
+        rightEncoder.SetPosition(0); 
+        leftEncoder.SetPosition(0);
+        autoStep++;
+      }
     }
-    else{
-      m_robotDrive.ArcadeDrive(0, 0); 
+    if(autoStep == 1){
+      if (timer.Get() < 2_s)
+      {
+       m_robotDrive.ArcadeDrive(0, 0);
+      }
+      else{
+        timer.Stop();
+        autoStep++;
+      }
+    }
+    if(autoStep == 2){
+      frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
+      if(rightEncoder.GetPosition() > -7.0){ 
+        m_robotDrive.ArcadeDrive(-0.4, 0); 
+      }
+      else{
+        timer.Start();
+        m_robotDrive.ArcadeDrive(0, 0); 
+        autoStep++;
+      }
     }
 
   }
@@ -493,8 +529,8 @@ void AutonomousPeriodic() override {
     if(autoStep == 0){
         frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
         frc::SmartDashboard::PutString("AutoPart", "Part1");
-        if(rightEncoder.GetPosition() < 18.0){ 
-          m_robotDrive.ArcadeDrive(0.6, 0); 
+        if(rightEncoder.GetPosition() < 17.0){ 
+          m_robotDrive.ArcadeDrive(0.7, 0); 
         }
         else{
           frc::SmartDashboard::PutString("AutoPart", "Part2");
@@ -507,7 +543,7 @@ void AutonomousPeriodic() override {
     }
 
     if(autoStep == 1){
-      if (timer.Get() < 2_s)
+      if (timer.Get() < 1_s)
       {
        m_robotDrive.ArcadeDrive(0, 0);
       }
@@ -519,8 +555,8 @@ void AutonomousPeriodic() override {
 
     if(autoStep == 2){
       frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
-      if(rightEncoder.GetPosition() > -8.5){ 
-        m_robotDrive.ArcadeDrive(0.6, 0); 
+      if(rightEncoder.GetPosition() > -7.5){ 
+        m_robotDrive.ArcadeDrive(-0.7, 0); 
       }
       else{
         m_robotDrive.ArcadeDrive(0, 0); 
@@ -531,16 +567,16 @@ void AutonomousPeriodic() override {
     }
     if(autoStep == 3){
           frc::SmartDashboard::PutNumber("Robot Pitch", ahrs->GetRoll());
-      //if(fabs(rightEncoder.GetPosition()) < 2.0){
-        m_robotDrive.ArcadeDrive(-0.025*(ahrs->GetRoll()), 0);
-      //}
+      if(fabs(rightEncoder.GetPosition()) < 10.0){
+        m_robotDrive.ArcadeDrive(-0.022*(ahrs->GetRoll()), 0);
+      }
     }
   }
 
   if(SelectedAuto == 3){
           frc::SmartDashboard::PutNumber("Robot Pitch", ahrs->GetRoll());
       //if(fabs(rightEncoder.GetPosition()) < 2.0){
-        m_robotDrive.ArcadeDrive(-0.025*(ahrs->GetRoll()), 0);
+        m_robotDrive.ArcadeDrive(-0.02*(ahrs->GetRoll()), 0);
  // }
 }
 
@@ -820,20 +856,63 @@ void AutonomousPeriodic() override {
   }
   
   if(SelectedAuto == 8){ //This hypothetically place something and the move out of community ?
+   double armRotaion = armREncoder.GetPosition();
+   if(fabs(armRotaion - armRGoal) < 20){
+          // dont need to do a full retract for small moves
+          /*
+          if(armEGoal > maxArmExtension){ //# if requested position is greater than the limits
+              armExtend.Set(ControlMode::Position, countsforMax); // just go to max extension for rotation
+          }
+          else{
+              armExtend.Set(ControlMode::Position, countsforgoal); // otherwise go to requested position
+          }
+          */
+          armExtend.Set(ControlMode::Position, armEGoal);
+          armPID.SetReference(armRGoal, rev::CANSparkMax::ControlType::kPosition);
+      }
+      else{
+          armExtend.Set(ControlMode::Position, 0); //# fully retract arm to allow full rotation
+          if(fabs(armExtend.GetClosedLoopError()) < 2048){ //# if retracted to less than 1 foot rotate
+              armPID.SetReference(armRGoal, rev::CANSparkMax::ControlType::kPosition);
+          }
+      }
     if(autoStep == 0){
-
-     armExtend.Set(ControlMode::Position, 5000);
-     autoStep = 1;
+      if(ArmZeroed == true){
+      armRGoal = 69;
+      armEGoal = 79000;
+      }
     }
-    if(autoStep == 1){
-
-     handF.Set(0.3);
-     autoStep = 2;
+    else{
+      autoStep ++;
+    }
+    if(autoStep ==3){
+      handF.Set(0.3);
+    }
+    else{
+      autoStep ++;
+      timer.Start();
     }
     if(autoStep == 2){
+  if (timer.Get() < 1_s)
+      {
+       handF.Set(0);
+      }
+    }
+    else{
+      timer.Stop();
+      autoStep ++;
+    }
+    if(autoStep == 3){
+      armRGoal = 10;
+      armEGoal = 50;
+    }
+    else{
+      autoStep ++;
+    }
+    if(autoStep == 4){
 
      frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
-      if(rightEncoder.GetPosition() < 12){ 
+      if(rightEncoder.GetPosition() < 4){ 
        m_robotDrive.ArcadeDrive(0.8, 0); 
       }
       else{
@@ -841,79 +920,62 @@ void AutonomousPeriodic() override {
        m_robotDrive.ArcadeDrive(0, 0);
        rightEncoder.SetPosition(0); 
        leftEncoder.SetPosition(0);
+       autoStep++;
+       timer.Start();
         }
     }
-  }
-
-  if(SelectedAuto == 9){ //THROW and balance
-    if(autoStep == 0){
-      handF.Set(-0.3);
-      handR.Set(-0.3);
-      timer.Start();
+    if(autoStep == 7){
+          frc::SmartDashboard::PutNumber("Robot Pitch", ahrs->GetRoll());
+      if(fabs(rightEncoder.GetPosition()) < 10.0){
+        m_robotDrive.ArcadeDrive(-0.02*(ahrs->GetRoll()), 0);
+      }
     }
-    else{
-      autoStep == 1;
+  }
+  if(SelectedAuto == 8){
+    frc::SmartDashboard::PutBoolean("Bypassed Zeroing in Auto", bypassZeroed);
+    double armRotaion = armREncoder.GetPosition();
+    if(timer.Get() > 2_s || ArmZeroed == true || bypassZeroed == true){
+      bypassZeroed = true;
+      if(fabs(armRotaion - armRGoal) < 20){
+          // dont need to do a full retract for small moves
+          /*
+          if(armEGoal > maxArmExtension){ //# if requested position is greater than the limits
+              armExtend.Set(ControlMode::Position, countsforMax); // just go to max extension for rotation
+          }
+          else{
+              armExtend.Set(ControlMode::Position, countsforgoal); // otherwise go to requested position
+          }
+          */
+          armExtend.Set(ControlMode::Position, armEGoal);
+          armPID.SetReference(armRGoal, rev::CANSparkMax::ControlType::kPosition);
+      }
+      else{
+          armExtend.Set(ControlMode::Position, 0); //# fully retract arm to allow full rotation
+          if(fabs(armExtend.GetClosedLoopError()) < 2048){ //# if retracted to less than 1 foot rotate
+              armPID.SetReference(armRGoal, rev::CANSparkMax::ControlType::kPosition);
+          }
+      }
+    }
+    if(autoStep == 0){
+      armRGoal = 69;
+      armEGoal = 79000;
+      if(armExtend.GetClosedLoopError() < 100 && fabs(armREncoder.GetPosition() - armRGoal) < 5){
+        autoStep++;
+      }
     }
     if(autoStep == 1){
-      if(timer.Get() >= 1_s){
-        handF.Set(0);
-        handR.Set(0);
-      }
-      else{
-        autoStep == 2;
-      }
+      handF.Set(0.6);
+      handR.Set(0.6);
     }
-      if(autoStep == 2){
-         frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
-        frc::SmartDashboard::PutString("AutoPart", "Part1");
-        if(rightEncoder.GetPosition() < 15.0){ 
-          m_robotDrive.ArcadeDrive(0.6, 0); 
-        }
-        else{
-          frc::SmartDashboard::PutString("AutoPart", "Part2");
-          m_robotDrive.ArcadeDrive(0, 0); 
-          autoStep = 3;
-          rightEncoder.SetPosition(0); 
-          leftEncoder.SetPosition(0);
-          timer.Start();
-        }
-      }
-      if(autoStep == 3){
-        if (timer.Get() < 2_s)
-      {
-       m_robotDrive.ArcadeDrive(0, 0);
-      }
-      else{
-        timer.Stop();
-        autoStep ++;
-      }
-      }
-      if(autoStep == 4){
-              frc::SmartDashboard::PutNumber("EncoderPos", rightEncoder.GetPosition());
-      if(rightEncoder.GetPosition() > -8.5){ 
-        m_robotDrive.ArcadeDrive(0.6, 0); 
-      }
-      else{
-        m_robotDrive.ArcadeDrive(0, 0); 
-        autoStep ++;
-        rightEncoder.SetPosition(0); 
-        leftEncoder.SetPosition(0);
-      }
-      }
-      if(autoStep == 5){
-        frc::SmartDashboard::PutNumber("Robot Pitch", ahrs->GetRoll());
-        m_robotDrive.ArcadeDrive(-0.025*(ahrs->GetRoll()), 0);
-      }
   }
-
-}
+}; 
 
 
 
   // Teleop Area
   void TeleopInit() override {
       if(ArmZeroed == false){
-        armExtend.Set(ControlMode::PercentOutput, -0.3);
+        armExtend.Set(ControlMode::PercentOutput, -0.35);
       }
       else{
         armExtend.Set(ControlMode::Position, 0);
@@ -1079,61 +1141,100 @@ void AutonomousPeriodic() override {
     }
 
 		//press button and it'll go where you want it to go
-		if (m_stickOperator.GetYButtonPressed()) {
-      armRGoal = 30;
-      armEGoal = 5000;
-      //armPID.SetReference(30, rev::CANSparkMax::ControlType::kPosition);
-      armPID.SetReference(60, rev::CANSparkMax::ControlType::kPosition);
-		}
-
-    if (m_stickOperator.GetXButtonPressed()) {
-      armRGoal = 60;
-      armEGoal = 4500;
-      //armPID.SetReference(60, rev::CANSparkMax::ControlType::kPosition);
-      armExtend.Set(ControlMode::Position, 50000);
-		}
-
-    if (m_stickOperator.GetAButtonPressed()) {
-      armRGoal = 90;
-      armEGoal = 4000;
-      armExtend.Set(ControlMode::Position, 100000);
-		}
-    
-    if (m_stickOperator.GetPOV(0)) {
-      armRGoal = -30;
-      armEGoal = -5000;
-      armPID.SetReference(30, rev::CANSparkMax::ControlType::kPosition);
-		}
-
-    if (m_stickOperator.GetPOV(180)) {
-      armRGoal = -60;
-      armEGoal = -4500;
-      armPID.SetReference(60, rev::CANSparkMax::ControlType::kPosition);
-		}
-    
-    armExtend.Set(ControlMode::Position, armEGoal+(10*Deadband(-m_stickOperator.GetLeftY(), 0.005)));
-
-    double countsforgoal = armEGoal/(3.14159*(2-0.05*(floor(armExtend.GetSelectedSensorPosition()/(10.61*2048)))));
-
-    double countsforMax = maxArmExtension/(3.14159*(2-0.05*(floor(armExtend.GetSelectedSensorPosition()/(10.61*2048)))));
-
-    
-    if(fabs(armRotaion - armRGoal) < 20){
-        // dont need to do a full retract for small moves
-        if(armEGoal > maxArmExtension){ //# if requested position is greater than the limits
-            armExtend.Set(ControlMode::Position, maxArmExtension); // just go to max extension for rotation
-        }
-        else{
-            armExtend.Set(ControlMode::Position, armEGoal); // otherwise go to requested position
-        }
-        armPID.SetReference(armRGoal, rev::CANSparkMax::ControlType::kPosition);
+		
+    if (m_stickOperator.GetBackButtonPressed()){ // Stow Arm
+      armRGoal = 13.6;
+      armEGoal = 50;
+      buttonpressed = true;
     }
-    else{
-        armExtend.Set(ControlMode::Position, 0); //# fully retract arm to allow full rotation
-        if(armEposIN < 12){ //# if retracted to less than 1 foot rotate
-            armPID.SetReference(armRGoal, rev::CANSparkMax::ControlType::kPosition);
-        }
+
+    if (m_stickOperator.GetYButtonPressed()) { // High
+      armRGoal = 75;
+      armEGoal = 176205;
+      buttonpressed = true;
+		}
+
+    if (m_stickOperator.GetXButtonPressed()) { // Middle
+      armRGoal = 69;
+      armEGoal = 79000;
+      buttonpressed = true;
+		}
+
+    if (m_stickOperator.GetAButtonPressed()) { // Low
+      armRGoal = 26;
+      armEGoal = 65910;
+      buttonpressed = true;
+		}
+    
+    //if(m_stickOperator.GetPOV() == 0) {  // Reverse High
+    //  armRGoal = 45;
+    //  armEGoal = 5000;
+    //  buttonpressed = true;
+		//}
+
+    if (m_stickOperator.GetPOV() == 180) { // Reverse Mid
+      armRGoal = 217;
+      armEGoal = 16355;
+      buttonpressed = true;
+		}
+
+    //if (m_stickOperator.GetPOV() == 90) { // FeederStation
+    //  armRGoal = 50;
+    //  armEGoal = 5000;
+    //  buttonpressed = true;
+    //}
+    
+    
+    
+
+    
+
+    //double countsforgoal = armEGoal/(3.14159*(2-(0.05*(floor(armExtend.GetSelectedSensorPosition()/(10.61*2048))))));
+
+    //double countsforMax = maxArmExtension/(3.14159*(2-(0.05*(floor(armExtend.GetSelectedSensorPosition()/(10.61*2048))))));
+
+    frc::SmartDashboard::PutNumber("Arm E Goal", armEGoal);
+    frc::SmartDashboard::PutNumber("Arm R Goal", armRGoal);
+
+    //frc::SmartDashboard::PutNumber("countsforgoal", countsforgoal);
+    //frc::SmartDashboard::PutNumber("countsforMax", countsforMax);
+
+    if(fabs(Deadband(-m_stickOperator.GetLeftY(), 0.3)) > 0 || fabs(Deadband(-m_stickOperator.GetRightY(), 0.3)) > 0){
+      armEGoal = armEGoal + (500*Deadband(-m_stickOperator.GetLeftY(), 0.3)); // Adjust the Extension
+      armRGoal = armRGoal + (1*Deadband(-m_stickOperator.GetRightY(), 0.3)); // Adjust the Rotation
+      joystickadjust = true;
     }
+
+    
+    if(buttonpressed == true){
+      if(fabs(armRotaion - armRGoal) < 5){
+          // dont need to do a full retract for small moves
+          /*
+          if(armEGoal > maxArmExtension){ //# if requested position is greater than the limits
+              armExtend.Set(ControlMode::Position, countsforMax); // just go to max extension for rotation
+          }
+          else{
+              armExtend.Set(ControlMode::Position, countsforgoal); // otherwise go to requested position
+          }
+          */
+          armExtend.Set(ControlMode::Position, armEGoal);
+          armPID.SetReference(armRGoal, rev::CANSparkMax::ControlType::kPosition);
+      }
+      else if(joystickadjust == true){
+          armExtend.Set(ControlMode::Position, armEGoal);
+          armPID.SetReference(armRGoal, rev::CANSparkMax::ControlType::kPosition);
+          if(fabs(armRotaion - armRGoal) < 5){
+            joystickadjust = false;
+          }
+      }
+      else{
+          armExtend.Set(ControlMode::Position, 0); //# fully retract arm to allow full rotation
+          if(fabs(armExtend.GetClosedLoopError()) < 2048){ //# if retracted to less than 1 foot rotate
+              armPID.SetReference(armRGoal, rev::CANSparkMax::ControlType::kPosition);
+          }
+      }
+    }
+    
     
     //coast mode
     if (m_stickDrive.GetRawButton(5)){
@@ -1194,10 +1295,14 @@ void DisabledInit() override {
 }
 
 void DisabledPeriodic() override {
-   frc::SmartDashboard::PutNumber("Nav X Yaw", ahrs->GetAngle());
-   frc::SmartDashboard::PutNumber("Nav X Roll", ahrs->GetRoll());
-   frc::SmartDashboard::PutNumber("Nav X Pitch", ahrs->GetPitch());
+  frc::SmartDashboard::PutNumber("Nav X Yaw", ahrs->GetAngle());
+  frc::SmartDashboard::PutNumber("Nav X Roll", ahrs->GetRoll());
+  frc::SmartDashboard::PutNumber("Nav X Pitch", ahrs->GetPitch());
 
+  frc::SmartDashboard::PutNumber("POV of Controller", m_stickOperator.GetPOV());
+
+  double armRotaion = armREncoder.GetPosition();
+  frc::SmartDashboard::PutNumber("Arm Rotation Encoder", armRotaion);
 
 
 }
